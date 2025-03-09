@@ -31,7 +31,6 @@ export async function getPlayerPNLHistory(player, currentRound) {
     const history = [];
     for (let i = 0; i < currentRound; i++) {
         const pnl = await competitionContract.playerPNLHistory(player, i);
-        // Optional: simplified since pnl is already a BigNumber, but original is fine
         history.push(pnl);
     }
     return history;
