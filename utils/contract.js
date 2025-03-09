@@ -1,10 +1,8 @@
 import { ethers } from 'ethers';
 import competitionAbi from '../abis/Competition.json';
-import config from '../config.json';
 
-const provider = new ethers.JsonRpcProvider(config.rpc);
-const competitionAddress = config.competitionAddress;
-const competitionContract = new ethers.Contract(competitionAddress, competitionAbi, provider);
+const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL);
+const competitionContract = new ethers.Contract(process.env.NEXT_PUBLIC_competitionAddress, competitionAbi, provider);
 
 export async function getParticipants() {
     const length = await competitionContract.participantsLength();
