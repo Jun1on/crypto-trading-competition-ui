@@ -14,11 +14,13 @@ export async function getParticipants() {
     }
     return await Promise.all(promises);
 }
-
 export async function getPNL(player) {
     const [realizedPNL, unrealizedPNL] = await competitionContract.getPNL(player);
-    // Optional: simplified since they’re already BigNumbers, but original is fine too
-    return { realizedPNL, unrealizedPNL };
+
+    return {
+        realizedPNL: parseFloat(ethers.formatEther(realizedPNL)),
+        unrealizedPNL: parseFloat(ethers.formatEther(unrealizedPNL))
+    };
 }
 
 export async function getCurrentRound() {
@@ -37,4 +39,14 @@ export async function getPlayerPNLHistory(player, currentRound) {
 
 export async function getNonce(player) {
     return await provider.getTransactionCount(player);
+}
+
+export function getNickname(index) {
+    if (process.env.NEXT_PUBLIC_nicknames) {
+        console.log(process.env.NEXT_PUBLIC_nicknames);
+        const nickname = process.env.NEXT_PUBLIC_nicknames.split(', ')[index];
+        if (nickname) return nickname;
+    }
+    console.log("nah")
+    return "Player " + index;
 }
