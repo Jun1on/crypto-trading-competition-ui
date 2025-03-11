@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
 import competitionAbi from '../abis/Competition.json';
+import erc20Abi from '../abis/ERC20.json';
 
 const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL);
 const competitionContract = new ethers.Contract(process.env.NEXT_PUBLIC_competitionAddress, competitionAbi, provider);
@@ -22,7 +23,11 @@ export async function getPNL(player) {
 }
 
 export async function getCurrentRound() {
-    return (await competitionContract.currentRound()).toNumber();
+    return Number((await competitionContract.currentRound()).toString());
+}
+
+export async function getCurrentToken() {
+    return await competitionContract.currentToken();
 }
 
 export async function getPlayerPNLHistory(player, currentRound) {
@@ -38,12 +43,20 @@ export async function getNonce(player) {
     return await provider.getTransactionCount(player);
 }
 
+export async function getTokenInfo(tokenAddress) {
+    const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, provider);
+    const [name, symbol] = await Promise.all([
+        tokenContract.name(),
+        tokenContract.symbol()
+    ]);
+    return [name, symbol];
+}
+
+
 export function getNickname(index) {
     if (process.env.NEXT_PUBLIC_nicknames) {
-        console.log(process.env.NEXT_PUBLIC_nicknames);
         const nickname = process.env.NEXT_PUBLIC_nicknames.split(', ')[index];
         if (nickname) return nickname;
     }
-    console.log("nah")
     return "Player " + index;
 }
