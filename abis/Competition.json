@@ -2,6 +2,7 @@
   {
     "inputs": [
       { "internalType": "address", "name": "_USDM", "type": "address" },
+      { "internalType": "address", "name": "_marketMaker", "type": "address" },
       {
         "internalType": "address[]",
         "name": "_participants",
@@ -161,6 +162,13 @@
   },
   {
     "inputs": [],
+    "name": "marketMaker",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "owner",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "stateMutability": "view",
@@ -208,6 +216,16 @@
         "type": "uint256"
       },
       { "internalType": "uint256", "name": "devShare", "type": "uint256" },
+      {
+        "internalType": "uint256",
+        "name": "marketMakerShare",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "marketMakerUSDM",
+        "type": "uint256"
+      },
       { "internalType": "uint256", "name": "airdropUSDM", "type": "uint256" }
     ],
     "name": "startRound",

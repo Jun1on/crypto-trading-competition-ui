@@ -38,7 +38,7 @@ const Leaderboard = () => {
     }, [fetchLeaderboard]);
 
     return (
-        <div className="container mx-auto p-10 max-w-4xl">
+        <div className="container mx-auto max-w-4xl">
             <div className="overflow-auto max-h-[600px] shadow-md rounded-lg">
                 <Table className="min-w-full bg-gray-800 text-white">
                     <TableHeader className="sticky top-0 bg-gray-700">
