@@ -74,7 +74,7 @@ const RoundDashboard = () => {
     }
 
     return (
-        <div className="bg-gradient-to-r from-gray-900 to-black mx-auto rounded-lg shadow-lg p-10 max-w-4xl">
+        <div className="bg-gradient-to-r from-gray-900 to-black mx-auto rounded-lg shadow-lg p-10 my-5 max-w-4xl">
             <div className="flex flex-col items-center text-white gap-4">
                 <div className="text-3xl font-bold">
                     {loading ? (
