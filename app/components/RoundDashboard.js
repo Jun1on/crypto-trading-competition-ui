@@ -15,14 +15,18 @@ const RoundDashboard = () => {
     const [tokenSymbol, setTokenSymbol] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // Custom skeleton theme to match dark background
+    const skeletonBaseColor = "#2d3748"; // dark gray
+    const skeletonHighlightColor = "#4a5568"; // slightly lighter gray
+
     const fetchRoundInfo = async (firstRun) => {
-        console.log("bool", firstRun);
+        console.log("fetchRoundInfo")
         try {
             let newRound, newToken;
             if (firstRun === true) {
-                newRound = await getCurrentRound();
-                if (newRound === currentRound) return;
                 newToken = await getCurrentToken();
+                if (newToken === tokenAddress) return;
+                newRound = await getCurrentRound();
             } else {
                 [newRound, newToken] = await Promise.all([
                     getCurrentRound(),
@@ -38,7 +42,7 @@ const RoundDashboard = () => {
                 setTokenName(name);
                 setTokenSymbol(symbol);
             } else {
-                setTokenName('');
+                setTokenName('waiting for round to start');
                 setTokenSymbol('');
             }
         } catch (error) {
@@ -61,24 +65,16 @@ const RoundDashboard = () => {
         }
     };
 
-    const truncatedAddress = tokenAddress
+    const truncatedAddress = (tokenAddress)
         ? `${tokenAddress.slice(0, 6)}...${tokenAddress.slice(-4)}`
         : null;
-
-    if (!loading && tokenAddress === '0x0000000000000000000000000000000000000000') {
-        return (
-            <div className="text-center text-white p-4">
-                No active round
-            </div>
-        );
-    }
 
     return (
         <div className="bg-gradient-to-r from-gray-900 to-black mx-auto rounded-lg shadow-lg p-10 my-5 max-w-4xl">
             <div className="flex flex-col items-center text-white gap-4">
                 <div className="text-3xl font-bold">
                     {loading ? (
-                        <Skeleton width={150} height={36} />
+                        <Skeleton width={150} height={34} baseColor={skeletonBaseColor} highlightColor={skeletonHighlightColor} />
                     ) : (
                         `Round #${currentRound}`
                     )}
@@ -86,19 +82,21 @@ const RoundDashboard = () => {
                 <div className="text-2xl text-orange-500 text-center">
                     {loading ? (
                         <div className="flex flex-col items-center gap-2">
-                            <Skeleton width={150} height={24} />
-                            <Skeleton width={200} height={66} />
+                            <Skeleton width={150} height={24} baseColor={skeletonBaseColor} highlightColor={skeletonHighlightColor} />
+                            <Skeleton width={200} height={68} baseColor={skeletonBaseColor} highlightColor={skeletonHighlightColor} />
                         </div>
                     ) : (
                         <div className="flex flex-col items-center gap-2">
                             <div>{tokenName}</div>
-                            <div className="text-7xl font-bold">${tokenSymbol.toUpperCase()}</div>
+                            {tokenSymbol ? (<div className="text-7xl font-bold">${tokenSymbol.toUpperCase()}</div>) :
+                                (<Skeleton width={200} height={68} baseColor={skeletonBaseColor} highlightColor={skeletonHighlightColor} />)}
+
                         </div>
                     )}
                 </div>
                 <div className="flex items-center text-sm text-gray-400">
                     {loading ? (
-                        <Skeleton width={128} height={20} />
+                        <Skeleton width={128} height={20} baseColor={skeletonBaseColor} highlightColor={skeletonHighlightColor} />
                     ) : (
                         <>
                             <span className="font-mono">{truncatedAddress}</span>
