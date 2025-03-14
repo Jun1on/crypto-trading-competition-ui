@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { getCurrentRound, getCurrentToken, getTokenInfo } from '../../utils/contract';
-import { DocumentDuplicateIcon } from '@heroicons/react/24/outline';
+import { DocumentDuplicateIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import toast, { Toaster } from 'react-hot-toast';
 import Skeleton from 'react-loading-skeleton';
 import "react-loading-skeleton/dist/skeleton.css";
@@ -107,6 +107,18 @@ const RoundDashboard = () => {
                             >
                                 <DocumentDuplicateIcon className="w-4 h-4" />
                             </button>
+                            {tokenAddress && tokenAddress !== ethers.ZeroAddress && (
+                                <a
+                                    href={`https://dexscreener.com/optimism/${tokenAddress}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="ml-3 flex items-center text-blue-400 hover:text-blue-300 transition-colors"
+                                    title="View on DexScreener"
+                                >
+                                    <ChartBarIcon className="w-4 h-4 mr-1" />
+                                    <span>Chart</span>
+                                </a>
+                            )}
                         </>
                     )}
                 </div>
