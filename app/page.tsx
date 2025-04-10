@@ -1,8 +1,10 @@
 "use client";
 import Leaderboard from "./components/Leaderboard";
 import RoundDashboard from "./components/RoundDashboard";
+import { useAccount } from "wagmi";
 
 export default function Home() {
+  const { address } = useAccount();
   const mockParticipants = [
     "0x1234567890abcdef1234567890abcdef12345678",
     "0x2345678901abcdef2345678901abcdef23456789",
@@ -21,6 +23,7 @@ export default function Home() {
         participants={mockParticipants}
         realizedPNLs={mockRealizedPNLs}
         unrealizedPNLs={mockUnrealizedPNLs}
+        me={address}
       />
     </div>
   );

@@ -8,6 +8,11 @@ const competitionContract = new ethers.Contract(
   competitionAbi,
   provider
 );
+const peripheryContract = new ethers.Contract(
+  process.env.NEXT_PUBLIC_peripheryAddress,
+  PeripheryABI,
+  provider
+);
 
 export async function getParticipants() {
   const length = await competitionContract.participantsLength();
@@ -66,16 +71,6 @@ export function getNickname(index) {
 
 export async function fetchPNLData() {
   try {
-    const provider = new ethers.JsonRpcProvider(
-      process.env.NEXT_PUBLIC_RPC_URL
-    );
-    const peripheryContract = new ethers.Contract(
-      process.env.NEXT_PUBLIC_peripheryAddress,
-      PeripheryABI,
-      provider
-    );
-
-    // Call the getPNLs function from the contract
     const [participants, realizedPNLs, unrealizedPNLs] =
       await peripheryContract.getPNLs(
         process.env.NEXT_PUBLIC_competitionAddress

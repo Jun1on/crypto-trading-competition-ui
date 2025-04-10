@@ -3,8 +3,10 @@ import { useState, useEffect, useRef } from "react";
 import Leaderboard from "../components/Leaderboard";
 import { fetchPNLData } from "../../utils/contract";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import { useAccount } from "wagmi";
 
 export default function LeaderboardPage() {
+  const { address } = useAccount();
   const [participants, setParticipants] = useState<string[]>([]);
   const [realizedPNLs, setRealizedPNLs] = useState<number[]>([]);
   const [unrealizedPNLs, setUnrealizedPNLs] = useState<number[]>([]);
@@ -76,33 +78,37 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-4xl">
-      <div className="mb-4 flex justify-between items-center text-xs text-gray-500 px-2">
-        <div className="flex items-center">
-          <div
-            className={`w-2 h-2 rounded-full mr-2 transition-colors duration-700 ease-in-out ${
-              isRefreshing ? "bg-blue-500 animate-pulse" : "bg-green-500"
-            }`}
-          ></div>
-          <span>Updating live</span>
-        </div>
+    <div className="container mx-auto p-4">
+      <div className="max-w-4xl mx-auto">
+        <Leaderboard
+          participants={participants}
+          realizedPNLs={realizedPNLs}
+          unrealizedPNLs={unrealizedPNLs}
+          me={address}
+        />
 
-        {lastUpdated && (
+        <div className="mt-4 flex justify-between items-center text-xs text-gray-500 px-2">
           <div className="flex items-center">
-            <span>Last updated: {lastUpdated.toLocaleTimeString()}</span>
-            <ArrowPathIcon
-              className={`ml-2 w-3 h-3 ${
-                isRefreshing ? "animate-spin text-blue-500" : "text-gray-500"
+            <div
+              className={`w-2 h-2 rounded-full mr-2 transition-colors duration-700 ease-in-out ${
+                isRefreshing ? "bg-blue-500 animate-pulse" : "bg-green-500"
               }`}
-            />
+            ></div>
+            <span>Updating live</span>
           </div>
-        )}
+
+          {lastUpdated && (
+            <div className="flex items-center">
+              <span>Last updated: {lastUpdated.toLocaleTimeString()}</span>
+              <ArrowPathIcon
+                className={`ml-2 w-3 h-3 ${
+                  isRefreshing ? "animate-spin text-blue-500" : "text-gray-500"
+                }`}
+              />
+            </div>
+          )}
+        </div>
       </div>
-      <Leaderboard
-        participants={participants}
-        realizedPNLs={realizedPNLs}
-        unrealizedPNLs={unrealizedPNLs}
-      />
     </div>
   );
 }

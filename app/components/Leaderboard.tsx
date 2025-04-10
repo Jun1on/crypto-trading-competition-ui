@@ -5,24 +5,18 @@ import { getNickname } from "../../utils/contract";
 import { Table, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 
-interface LeaderboardEntry {
-  player: string;
-  nickname: string;
-  realizedPNL: number;
-  unrealizedPNL: number;
-  totalPNL: number;
-}
-
 interface LeaderboardProps {
   participants: string[];
   realizedPNLs: number[];
   unrealizedPNLs: number[];
+  me?: string;
 }
 
 const Leaderboard: React.FC<LeaderboardProps> = ({
   participants = [],
   realizedPNLs = [],
   unrealizedPNLs = [],
+  me,
 }) => {
   if (
     participants.length !== realizedPNLs.length ||
@@ -71,59 +65,70 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
             </tr>
           </thead>
           <TableBody>
-            {leaderboardData.map((entry, index) => (
-              <TableRow
-                key={index}
-                className={`border-b border-gray-700 hover:bg-gray-700`}
-              >
-                <TableCell className="p-2 text-center">
-                  {(index + 1).toString().padStart(3, "0")}
-                </TableCell>
-                <TableCell className="p-2">
-                  <div className="flex items-center">
-                    <Link href={`/player/${entry.player}`}>
-                      <span className="flex items-center text-white hover:underline">
-                        <span>{entry.nickname}</span>
-                        <ArrowTopRightOnSquareIcon className="w-4 h-4 ml-1 text-gray-400" />
-                      </span>
-                    </Link>
-                  </div>
-                </TableCell>
-                <TableCell
-                  className={`p-2 text-right ${
-                    entry.realizedPNL < 0
-                      ? "text-red-400"
-                      : entry.realizedPNL > 0
-                      ? "text-green-400"
-                      : "text-gray-400"
+            {leaderboardData.map((entry, index) => {
+              const isMe =
+                me && me.toLowerCase() === entry.player.toLowerCase();
+
+              return (
+                <TableRow
+                  key={index}
+                  className={`border-b border-gray-700 hover:bg-gray-700 ${
+                    isMe ? "bg-orange-900/30 ring-1 ring-orange-500" : ""
                   }`}
                 >
-                  {entry.realizedPNL.toFixed(2)}
-                </TableCell>
-                <TableCell
-                  className={`p-4 text-right ${
-                    entry.unrealizedPNL < 0
-                      ? "text-red-400"
-                      : entry.unrealizedPNL > 0
-                      ? "text-green-400"
-                      : "text-gray-400"
-                  }`}
-                >
-                  {entry.unrealizedPNL.toFixed(2)}
-                </TableCell>
-                <TableCell
-                  className={`p-4 text-right ${
-                    entry.totalPNL < 0
-                      ? "text-red-400"
-                      : entry.totalPNL > 0
-                      ? "text-green-400"
-                      : "text-gray-400"
-                  }`}
-                >
-                  {entry.totalPNL.toFixed(2)}
-                </TableCell>
-              </TableRow>
-            ))}
+                  <TableCell className="p-2 text-center">
+                    {(index + 1).toString().padStart(3, "0")}
+                  </TableCell>
+                  <TableCell className="p-2">
+                    <div className="flex items-center">
+                      <Link href={`/player/${entry.player}`}>
+                        <span
+                          className={`flex items-center hover:underline ${
+                            isMe ? "text-orange-400 font-medium" : "text-white"
+                          }`}
+                        >
+                          <span>{entry.nickname}</span>
+                          <ArrowTopRightOnSquareIcon className="w-4 h-4 ml-1 text-gray-400" />
+                        </span>
+                      </Link>
+                    </div>
+                  </TableCell>
+                  <TableCell
+                    className={`p-2 text-right ${
+                      entry.realizedPNL < 0
+                        ? "text-red-400"
+                        : entry.realizedPNL > 0
+                        ? "text-green-400"
+                        : "text-gray-400"
+                    }`}
+                  >
+                    {entry.realizedPNL.toFixed(2)}
+                  </TableCell>
+                  <TableCell
+                    className={`p-4 text-right ${
+                      entry.unrealizedPNL < 0
+                        ? "text-red-400"
+                        : entry.unrealizedPNL > 0
+                        ? "text-green-400"
+                        : "text-gray-400"
+                    }`}
+                  >
+                    {entry.unrealizedPNL.toFixed(2)}
+                  </TableCell>
+                  <TableCell
+                    className={`p-4 text-right ${
+                      entry.totalPNL < 0
+                        ? "text-red-400"
+                        : entry.totalPNL > 0
+                        ? "text-green-400"
+                        : "text-gray-400"
+                    }`}
+                  >
+                    {entry.totalPNL.toFixed(2)}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
