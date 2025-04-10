@@ -1,0 +1,80 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_competitionAddress",
+        "type": "address"
+      }
+    ],
+    "name": "getPNLs",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "participantsArray",
+        "type": "address[]"
+      },
+      {
+        "internalType": "int256[]",
+        "name": "realizedPNLs",
+        "type": "int256[]"
+      },
+      {
+        "internalType": "int256[]",
+        "name": "unrealizedPNLs",
+        "type": "int256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_competitionAddress",
+        "type": "address"
+      }
+    ],
+    "name": "getParticipants",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "participantsArray",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_competitionAddress",
+        "type": "address"
+      },
+      { "internalType": "uint256", "name": "_roundId", "type": "uint256" }
+    ],
+    "name": "getRoundPNLs",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "participantsArray",
+        "type": "address[]"
+      },
+      {
+        "internalType": "int256[]",
+        "name": "realizedPNLs",
+        "type": "int256[]"
+      },
+      {
+        "internalType": "int256[]",
+        "name": "unrealizedPNLs",
+        "type": "int256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
