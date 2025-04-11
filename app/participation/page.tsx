@@ -128,53 +128,49 @@ export default function ParticipationPage() {
   };
 
   return (
-    <div className="container mx-auto">
-      <div className="max-w-4xl mx-auto mb-6">
-        <h1 className="text-2xl font-bold mb-4 text-center">
-          Round {latestRound}
-        </h1>
-        <div className="bg-gray-800 rounded-lg p-4 flex text-center">
-          <div className="w-1/3 flex justify-center">
-            <div>
-              <div className="text-red-400 font-medium">Did not trade</div>
-              <div className="text-2xl mt-1">{counts.none}</div>
-            </div>
+    <div className="container mx-auto max-w-4xl">
+      <h1 className="text-2xl font-bold mb-4 text-center">
+        Round {latestRound}
+      </h1>
+      <div className="bg-gray-800 rounded-lg p-4 flex text-center">
+        <div className="w-1/3 flex justify-center">
+          <div>
+            <div className="text-red-400 font-medium">Did not trade</div>
+            <div className="text-2xl mt-1">{counts.none}</div>
           </div>
-          <div className="w-1/3 flex justify-center">
-            <div>
-              <div className="text-blue-400 font-medium">Traded some</div>
-              <div className="text-2xl mt-1">{counts.partial}</div>
-            </div>
+        </div>
+        <div className="w-1/3 flex justify-center">
+          <div>
+            <div className="text-blue-400 font-medium">Traded some</div>
+            <div className="text-2xl mt-1">{counts.partial}</div>
           </div>
-          <div className="w-1/3 flex justify-center">
-            <div>
-              <div className="text-green-400 font-medium">Sold all tokens</div>
-              <div className="text-2xl mt-1">{counts.full}</div>
-            </div>
+        </div>
+        <div className="w-1/3 flex justify-center">
+          <div>
+            <div className="text-green-400 font-medium">Sold all tokens</div>
+            <div className="text-2xl mt-1">{counts.full}</div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto">
-        <div
-          className={`transition-opacity duration-500 ${
-            dataChanged ? "opacity-75" : "opacity-100"
-          }`}
-        >
-          <ParticipationGrid
-            participants={participants}
-            participationScores={participationScores}
-            trades={trades}
-            me={address}
-          />
-        </div>
-
-        <LiveUpdateIndicator
-          isRefreshing={isRefreshing}
-          lastUpdated={lastUpdated}
-          className="mt-4 px-2"
+      <div
+        className={`transition-opacity duration-500 ${
+          dataChanged ? "opacity-75" : "opacity-100"
+        }`}
+      >
+        <ParticipationGrid
+          participants={participants}
+          participationScores={participationScores}
+          trades={trades}
+          me={address}
         />
       </div>
+
+      <LiveUpdateIndicator
+        isRefreshing={isRefreshing}
+        lastUpdated={lastUpdated}
+        className="mt-4 px-2"
+      />
     </div>
   );
 }

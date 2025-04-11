@@ -45,7 +45,7 @@ export default function Home() {
   }, [loading]);
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto">
       <RoundDashboard />
 
       <div className="max-w-4xl mx-auto">

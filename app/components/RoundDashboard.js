@@ -69,15 +69,15 @@ const RoundDashboard = () => {
             <div className="flex flex-col items-center text-white gap-4">
                 <div className="text-3xl font-bold">
                     {loading ? (
-                        <Skeleton width={150} height={34} baseColor={skeletonBaseColor} highlightColor={skeletonHighlightColor} />
+                        <Skeleton width={120} height={34} baseColor={skeletonBaseColor} highlightColor={skeletonHighlightColor} />
                     ) : (
-                        `Round #${roundDetails.currentRound}`
+                        `Round ${roundDetails.currentRound}`
                     )}
                 </div>
                 <div className="text-2xl text-orange-500 text-center">
                     {loading ? (
                         <div className="flex flex-col items-center gap-2">
-                            <Skeleton width={150} height={24} baseColor={skeletonBaseColor} highlightColor={skeletonHighlightColor} />
+                            <Skeleton width={120} height={24} baseColor={skeletonBaseColor} highlightColor={skeletonHighlightColor} />
                             <Skeleton width={200} height={68} baseColor={skeletonBaseColor} highlightColor={skeletonHighlightColor} />
                         </div>
                     ) : (
@@ -93,7 +93,7 @@ const RoundDashboard = () => {
                 </div>
                 <div className="flex items-center text-sm text-gray-400">
                     {loading ? (
-                        <Skeleton width={128} height={20} baseColor={skeletonBaseColor} highlightColor={skeletonHighlightColor} />
+                        <Skeleton width={272} height={20} baseColor={skeletonBaseColor} highlightColor={skeletonHighlightColor} />
                     ) : (
                         <>
                             <span className="font-mono">{truncatedAddress}</span>
