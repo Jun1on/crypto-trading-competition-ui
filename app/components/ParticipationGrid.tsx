@@ -7,6 +7,7 @@ import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 interface ParticipationGridProps {
   participants: string[];
   participationScores: number[];
+  trades: number[];
   me?: string; // Optional prop for current user's address
 }
 
@@ -27,21 +28,28 @@ const getParticipationColor = (score: number) => {
 const ParticipationGrid: React.FC<ParticipationGridProps> = ({
   participants = [],
   participationScores = [],
+  trades = [],
   me,
 }) => {
-  if (participants.length !== participationScores.length) {
+  if (
+    participants.length === 0 ||
+    participants.length !== participationScores.length ||
+    participants.length !== trades.length
+  ) {
     return <div>Data mismatch</div>;
   }
 
   // Map participants to structured data
   const participationData = participants.map((player, index) => {
     const score = participationScores[index];
+    const tradeCount = trades[index];
     const nickname = getNickname(index);
 
     return {
       player,
       nickname,
       score,
+      tradeCount,
     };
   });
 
@@ -70,13 +78,19 @@ const ParticipationGrid: React.FC<ParticipationGridProps> = ({
               <div className="flex flex-col">
                 <div className="flex items-start justify-between">
                   <h3
-                    className={`font-medium ${
+                    className={`font-medium truncate max-w-[80%] ${
                       isMe ? "text-orange-400" : "text-white"
                     }`}
+                    title={entry.nickname}
                   >
                     {entry.nickname}
                   </h3>
-                  <ArrowTopRightOnSquareIcon className="w-4 h-4 text-gray-400" />
+                  <ArrowTopRightOnSquareIcon className="w-4 h-4 text-gray-400 flex-shrink-0 ml-2" />
+                </div>
+
+                <div className="mt-1 text-xs text-gray-400">
+                  {entry.tradeCount}{" "}
+                  {entry.tradeCount === 1 ? "trade" : "trades"}
                 </div>
               </div>
             </Link>

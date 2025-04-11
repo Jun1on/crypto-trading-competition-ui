@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@radix-ui/react-tooltip": "^1.2.0",
     "@shadcn/ui": "^0.0.4",
     "@tanstack/react-query": "^5.72.2",
     "@web3modal/wagmi": "^5.1.11",
@@ -34,6 +35,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "9.24.0",
+    "eslint-config-next": "15.3.0",
     "pino-pretty": "^13.0.0",
     "tailwindcss": "^4",
     "typescript": "^5"

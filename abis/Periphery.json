@@ -7,6 +7,134 @@
         "type": "address"
       }
     ],
+    "name": "_getMMPNL",
+    "outputs": [
+      { "internalType": "int256", "name": "realized", "type": "int256" },
+      { "internalType": "int256", "name": "unrealized", "type": "int256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_competitionAddress",
+        "type": "address"
+      },
+      { "internalType": "uint256", "name": "_round", "type": "uint256" }
+    ],
+    "name": "_getMMPNLAtRound",
+    "outputs": [
+      { "internalType": "int256", "name": "realized", "type": "int256" },
+      { "internalType": "int256", "name": "unrealized", "type": "int256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_competitionAddress",
+        "type": "address"
+      },
+      { "internalType": "address", "name": "_participant", "type": "address" },
+      { "internalType": "uint256", "name": "_round", "type": "uint256" }
+    ],
+    "name": "_getPNLAtRound",
+    "outputs": [
+      { "internalType": "int256", "name": "realized", "type": "int256" },
+      { "internalType": "int256", "name": "unrealized", "type": "int256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_competitionAddress",
+        "type": "address"
+      }
+    ],
+    "name": "_latestRound",
+    "outputs": [
+      { "internalType": "uint256", "name": "latestRound", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_competitionAddress",
+        "type": "address"
+      }
+    ],
+    "name": "getLatestRoundDetails",
+    "outputs": [
+      { "internalType": "address", "name": "USDM", "type": "address" },
+      { "internalType": "uint256", "name": "latestRound", "type": "uint256" },
+      { "internalType": "string", "name": "name", "type": "string" },
+      { "internalType": "string", "name": "symbol", "type": "string" },
+      { "internalType": "address", "name": "token", "type": "address" },
+      {
+        "internalType": "uint256",
+        "name": "startTimestamp",
+        "type": "uint256"
+      },
+      { "internalType": "uint256", "name": "endTimestamp", "type": "uint256" },
+      {
+        "internalType": "uint256",
+        "name": "airdropPerParticipantUSDM",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_competitionAddress",
+        "type": "address"
+      }
+    ],
+    "name": "getLatestRoundPNL",
+    "outputs": [
+      { "internalType": "uint256", "name": "latestRound", "type": "uint256" },
+      {
+        "internalType": "address[]",
+        "name": "participants",
+        "type": "address[]"
+      },
+      {
+        "internalType": "int256[]",
+        "name": "realizedPNLs",
+        "type": "int256[]"
+      },
+      {
+        "internalType": "int256[]",
+        "name": "unrealizedPNLs",
+        "type": "int256[]"
+      },
+      { "internalType": "int256", "name": "mmRealized", "type": "int256" },
+      { "internalType": "int256", "name": "mmUnrealized", "type": "int256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_competitionAddress",
+        "type": "address"
+      }
+    ],
     "name": "getPNLs",
     "outputs": [
       {
@@ -23,26 +151,9 @@
         "internalType": "int256[]",
         "name": "unrealizedPNLs",
         "type": "int256[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_competitionAddress",
-        "type": "address"
-      }
-    ],
-    "name": "getParticipants",
-    "outputs": [
-      {
-        "internalType": "address[]",
-        "name": "participants",
-        "type": "address[]"
-      }
+      },
+      { "internalType": "int256", "name": "mmRealized", "type": "int256" },
+      { "internalType": "int256", "name": "mmUnrealized", "type": "int256" }
     ],
     "stateMutability": "view",
     "type": "function"
@@ -57,6 +168,7 @@
     ],
     "name": "getParticipation",
     "outputs": [
+      { "internalType": "uint256", "name": "latestRound", "type": "uint256" },
       {
         "internalType": "address[]",
         "name": "participants",
@@ -66,7 +178,8 @@
         "internalType": "uint256[]",
         "name": "participationScores",
         "type": "uint256[]"
-      }
+      },
+      { "internalType": "uint256[]", "name": "trades", "type": "uint256[]" }
     ],
     "stateMutability": "view",
     "type": "function"
@@ -78,7 +191,7 @@
         "name": "_competitionAddress",
         "type": "address"
       },
-      { "internalType": "uint256", "name": "_roundId", "type": "uint256" }
+      { "internalType": "uint256", "name": "_round", "type": "uint256" }
     ],
     "name": "getRoundPNLs",
     "outputs": [
@@ -96,7 +209,26 @@
         "internalType": "int256[]",
         "name": "unrealizedPNLs",
         "type": "int256[]"
-      }
+      },
+      { "internalType": "int256", "name": "mmRealized", "type": "int256" },
+      { "internalType": "int256", "name": "mmUnrealized", "type": "int256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_competitionAddress",
+        "type": "address"
+      },
+      { "internalType": "address", "name": "_participant", "type": "address" }
+    ],
+    "name": "getStats",
+    "outputs": [
+      { "internalType": "uint256[]", "name": "PNLs", "type": "uint256[]" },
+      { "internalType": "uint256[]", "name": "trades", "type": "uint256[]" }
     ],
     "stateMutability": "view",
     "type": "function"

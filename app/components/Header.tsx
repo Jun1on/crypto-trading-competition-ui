@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
@@ -25,11 +25,19 @@ const Header = () => {
   const { open } = useWeb3Modal();
   const { address, isConnected } = useAccount();
   const [isLoading, setIsLoading] = useState(false);
+  // Add state to track if component is mounted (client-side only)
+  const [mounted, setMounted] = useState(false);
+
+  // Set mounted state to true when component mounts (client-side only)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const navItems = [
     { name: "Dashboard", href: "/" },
     { name: "Leaderboard", href: "/leaderboard" },
     { name: "Participation", href: "/participation" },
+    { name: "Learn", href: "/learn" },
   ];
 
   // Format address for display
@@ -50,8 +58,40 @@ const Header = () => {
     }
   };
 
+  // Render a consistent button during SSR to prevent hydration mismatch
+  const renderWalletButton = () => {
+    // Use a placeholder during server rendering
+    if (!mounted) {
+      return (
+        <button className="px-4 py-2 bg-orange-500 rounded-md font-medium">
+          Connect Wallet
+        </button>
+      );
+    }
+
+    // Show actual state-dependent UI on client
+    return isConnected && address ? (
+      <div className="flex items-center space-x-2">
+        <div
+          className="px-4 py-2 bg-gray-800 rounded-md text-orange-500 font-medium cursor-pointer"
+          onClick={handleConnect}
+        >
+          {formatAddress(address)}
+        </div>
+      </div>
+    ) : (
+      <button
+        onClick={handleConnect}
+        disabled={isLoading}
+        className="px-4 py-2 bg-orange-500 hover:bg-orange-600 rounded-md font-medium transition-colors disabled:opacity-50 cursor-pointer"
+      >
+        {isLoading ? "Connecting..." : "Connect Wallet"}
+      </button>
+    );
+  };
+
   return (
-    <header className="bg-gray-900 text-white py-4">
+    <header className="bg-gray-900 text-white py-4 relative">
       <nav className="flex justify-center space-x-8">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
@@ -71,25 +111,8 @@ const Header = () => {
         })}
       </nav>
 
-      <div className="absolute top-4 right-4">
-        {isConnected && address ? (
-          <div className="flex items-center space-x-2">
-            <div
-              className="px-4 py-2 bg-gray-800 rounded-md text-orange-500 font-medium cursor-pointer"
-              onClick={handleConnect}
-            >
-              {formatAddress(address)}
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={handleConnect}
-            disabled={isLoading}
-            className="px-4 py-2 bg-orange-500 hover:bg-orange-600 rounded-md font-medium transition-colors disabled:opacity-50 cursor-pointer"
-          >
-            {isLoading ? "Connecting..." : "Connect Wallet"}
-          </button>
-        )}
+      <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+        {renderWalletButton()}
       </div>
     </header>
   );
