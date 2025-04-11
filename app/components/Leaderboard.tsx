@@ -140,7 +140,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                             </TooltipContent>
                           </Tooltip>
                         ) : (
-                          <Link href={`/player/${entry.player}`}>
+                          <Link
+                            href={`/player/${entry.player}`}
+                            target="_blank"
+                          >
                             <span
                               className={`flex items-center hover:underline ${
                                 isMe
