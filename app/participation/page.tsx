@@ -3,13 +3,14 @@ import { useState, useEffect, useRef } from "react";
 import { useAccount } from "wagmi";
 import ParticipationGrid from "../components/ParticipationGrid";
 import { fetchParticipationData } from "../../utils/contract";
-import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import LiveUpdateIndicator from "../components/LiveUpdateIndicator";
 
 export default function ParticipationPage() {
   const { address } = useAccount();
+  const [latestRound, setLatestRound] = useState<number | null>(null);
   const [participants, setParticipants] = useState<string[]>([]);
   const [participationScores, setParticipationScores] = useState<number[]>([]);
+  const [trades, setTrades] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -25,9 +26,8 @@ export default function ParticipationPage() {
           setIsRefreshing(true);
         }
 
-        const { participants, participationScores } =
+        const { latestRound, participants, participationScores, trades } =
           await fetchParticipationData();
-
         const hasChanged =
           JSON.stringify(participants) !==
             JSON.stringify(dataRef.current.participants) ||
@@ -41,8 +41,10 @@ export default function ParticipationPage() {
           setTimeout(() => setDataChanged(false), 1000);
         }
 
+        setLatestRound(latestRound);
         setParticipants(participants);
         setParticipationScores(participationScores);
+        setTrades(trades);
         setLastUpdated(new Date());
         setError(null);
       } catch (error) {
@@ -63,17 +65,41 @@ export default function ParticipationPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-4 max-w-4xl">
-        <div className="bg-gray-800 rounded-lg p-8 text-center">
-          <div className="animate-pulse space-y-4">
-            <div className="h-6 bg-gray-700 rounded w-3/4 mx-auto"></div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-24 bg-gray-700 rounded"></div>
-              ))}
+      <div className="container mx-auto">
+        <div className="max-w-4xl mx-auto mb-6">
+          <div className="h-8 bg-gray-700 rounded w-40 mx-auto mb-4"></div>
+
+          <div className="bg-gray-800 rounded-lg p-4 flex text-center animate-pulse">
+            <div className="w-1/3 flex justify-center">
+              <div>
+                <div className="h-5 bg-gray-700 rounded w-24 mx-auto"></div>
+                <div className="h-8 bg-gray-700 rounded w-8 mx-auto mt-1"></div>
+              </div>
+            </div>
+            <div className="w-1/3 flex justify-center">
+              <div>
+                <div className="h-5 bg-gray-700 rounded w-24 mx-auto"></div>
+                <div className="h-8 bg-gray-700 rounded w-8 mx-auto mt-1"></div>
+              </div>
+            </div>
+            <div className="w-1/3 flex justify-center">
+              <div>
+                <div className="h-5 bg-gray-700 rounded w-24 mx-auto"></div>
+                <div className="h-8 bg-gray-700 rounded w-8 mx-auto mt-1"></div>
+              </div>
             </div>
           </div>
-          <p className="mt-4 text-gray-400">Loading participation data...</p>
+        </div>
+
+        <div className="max-w-4xl mx-auto animate-pulse">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {[...Array(12)].map((_, i) => (
+              <div
+                key={i}
+                className="h-24 bg-gray-800 border border-gray-700 rounded-lg"
+              ></div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -102,9 +128,11 @@ export default function ParticipationPage() {
   };
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto">
       <div className="max-w-4xl mx-auto mb-6">
-        <h1 className="text-2xl font-bold mb-4 text-center">Round {1}</h1>
+        <h1 className="text-2xl font-bold mb-4 text-center">
+          Round {latestRound}
+        </h1>
         <div className="bg-gray-800 rounded-lg p-4 flex text-center">
           <div className="w-1/3 flex justify-center">
             <div>
@@ -136,6 +164,7 @@ export default function ParticipationPage() {
           <ParticipationGrid
             participants={participants}
             participationScores={participationScores}
+            trades={trades}
             me={address}
           />
         </div>
