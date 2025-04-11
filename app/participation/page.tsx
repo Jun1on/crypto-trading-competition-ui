@@ -156,7 +156,7 @@ export default function ParticipationPage() {
       <div
         className={`transition-opacity duration-500 ${
           dataChanged ? "opacity-75" : "opacity-100"
-        }`}
+        } mt-4`}
       >
         <ParticipationGrid
           participants={participants}

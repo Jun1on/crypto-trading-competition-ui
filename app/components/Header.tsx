@@ -111,7 +111,7 @@ const Header = () => {
         })}
       </nav>
 
-      <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
         {renderWalletButton()}
       </div>
     </header>
