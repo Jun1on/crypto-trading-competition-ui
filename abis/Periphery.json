@@ -11,7 +11,7 @@
     "outputs": [
       {
         "internalType": "address[]",
-        "name": "participantsArray",
+        "name": "participants",
         "type": "address[]"
       },
       {
@@ -40,8 +40,32 @@
     "outputs": [
       {
         "internalType": "address[]",
-        "name": "participantsArray",
+        "name": "participants",
         "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_competitionAddress",
+        "type": "address"
+      }
+    ],
+    "name": "getParticipation",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "participants",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "participationScores",
+        "type": "uint256[]"
       }
     ],
     "stateMutability": "view",
@@ -60,7 +84,7 @@
     "outputs": [
       {
         "internalType": "address[]",
-        "name": "participantsArray",
+        "name": "participants",
         "type": "address[]"
       },
       {
