@@ -63,7 +63,7 @@ export async function getTokenInfo(tokenAddress) {
 
 export function getNickname(index) {
   if (process.env.NEXT_PUBLIC_nicknames) {
-    const nickname = process.env.NEXT_PUBLIC_nicknames.split(", ")[index];
+    const nickname = process.env.NEXT_PUBLIC_nicknames.split(",")[index];
     if (nickname) return nickname;
   }
   return "Player " + index;
@@ -76,7 +76,6 @@ export async function fetchPNLData() {
         process.env.NEXT_PUBLIC_competitionAddress
       );
 
-    // Convert BigInts to numbers for easier processing
     const formattedRealizedPNLs = realizedPNLs.map((pnl: bigint) =>
       Number(ethers.formatEther(pnl))
     );
@@ -96,6 +95,30 @@ export async function fetchPNLData() {
       participants: [],
       realizedPNLs: [],
       unrealizedPNLs: [],
+    };
+  }
+}
+
+export async function fetchParticipationData() {
+  try {
+    const [participants, participationScores] =
+      await peripheryContract.getParticipation(
+        process.env.NEXT_PUBLIC_competitionAddress
+      );
+
+    const formattedScores = participationScores.map((score) =>
+      Number(score)
+    );
+
+    return {
+      participants,
+      participationScores: formattedScores,
+    };
+  } catch (error) {
+    console.error("Error fetching participation data:", error);
+    return {
+      participants: [],
+      participationScores: [],
     };
   }
 }

@@ -4,6 +4,7 @@ import Leaderboard from "../components/Leaderboard";
 import { fetchPNLData } from "../../utils/contract";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useAccount } from "wagmi";
+import LiveUpdateIndicator from "../components/LiveUpdateIndicator";
 
 export default function LeaderboardPage() {
   const { address } = useAccount();
@@ -87,27 +88,11 @@ export default function LeaderboardPage() {
           me={address}
         />
 
-        <div className="mt-4 flex justify-between items-center text-xs text-gray-500 px-2">
-          <div className="flex items-center">
-            <div
-              className={`w-2 h-2 rounded-full mr-2 transition-colors duration-700 ease-in-out ${
-                isRefreshing ? "bg-blue-500 animate-pulse" : "bg-green-500"
-              }`}
-            ></div>
-            <span>Updating live</span>
-          </div>
-
-          {lastUpdated && (
-            <div className="flex items-center">
-              <span>Last updated: {lastUpdated.toLocaleTimeString()}</span>
-              <ArrowPathIcon
-                className={`ml-2 w-3 h-3 ${
-                  isRefreshing ? "animate-spin text-blue-500" : "text-gray-500"
-                }`}
-              />
-            </div>
-          )}
-        </div>
+        <LiveUpdateIndicator
+          isRefreshing={isRefreshing}
+          lastUpdated={lastUpdated}
+          className="mt-4 px-2"
+        />
       </div>
     </div>
   );
