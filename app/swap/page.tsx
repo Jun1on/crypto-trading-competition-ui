@@ -532,8 +532,8 @@ const SwapPage = () => {
           // Calculate Price Info string (using effective rate)
           if (effectiveRate > 0) {
             const priceStr = isInputUSDM
-              ? `1 ${tokenSymbol} ≈ $${(1 / effectiveRate).toFixed(4)}`
-              : `1 ${tokenSymbol} ≈ $${effectiveRate.toFixed(4)}`;
+              ? `1 ${tokenSymbol} = $${(1 / effectiveRate).toFixed(4)}`
+              : `1 ${tokenSymbol} = $${effectiveRate.toFixed(4)}`;
             setPriceInfo(priceStr);
           } else {
             setPriceInfo(null);
@@ -728,10 +728,25 @@ const SwapPage = () => {
 
   const handleSwapDirection = () => {
     if (isCalculatingOutput || isSwapping) return; // Prevent swap during calculation/swap
-    setInputAmount(outputAmount); // Swap amounts
-    setOutputAmount(inputAmount);
+
+    // Swap amounts
+    const currentInput = inputAmount;
+    const currentOutput = outputAmount;
+    setInputAmount(currentOutput);
+    setOutputAmount(currentInput);
+
+    // Swap balances
+    const currentInputBalance = inputBalance;
+    const currentOutputBalance = outputBalance;
+    setInputBalance(currentOutputBalance);
+    setOutputBalance(currentInputBalance);
+
+    // Toggle direction
     setIsInputUSDM((prev) => !prev);
-    // Balances will update via useEffect
+
+    // Price info will recalculate via useEffect trigger based on inputAmount change
+    setPriceInfo(null); // Clear price info immediately
+    setPriceImpact(null); // Clear price impact immediately
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1118,13 +1133,30 @@ const SwapPage = () => {
 
   return (
     <>
-      <div className="flex justify-center items-start pt-10 px-4">
+      <div className="flex flex-col items-center px-4">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <h1 className="text-5xl mb-8 font-semibold text-white cursor-help">
+                Uniswap Lite
+              </h1>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="max-w-[250px]">
+                - No complicated settings
+                <br />
+                - Simplified interface
+                <br />- Faster execution
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
         <div
           className={`bg-gray-800 p-4 rounded-2xl shadow-xl w-full max-w-md border border-gray-700 relative overflow-hidden ${
             priceInfo ? "pb-0" : ""
           }`}
         >
-          {/* Loading/Disabled Overlay */}
           {(isSwapping || (isRoundLoading && !roundDetails)) && (
             <div className="absolute inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-20">
               <svg
@@ -1151,7 +1183,6 @@ const SwapPage = () => {
             </div>
           )}
 
-          {/* Input Token Section */}
           <div
             className={`bg-gray-700 p-4 rounded-t-lg relative ${
               isDisabled ? "opacity-60" : ""
@@ -1210,7 +1241,6 @@ const SwapPage = () => {
             </div>
           </div>
 
-          {/* Arrow Button */}
           <div className="flex justify-center my-[-12px] z-10 relative">
             <button
               onClick={handleSwapDirection}
@@ -1224,7 +1254,6 @@ const SwapPage = () => {
             </button>
           </div>
 
-          {/* Output Token Section */}
           <div
             className={`bg-gray-700 p-4 rounded-b-lg mb-4 relative overflow-hidden ${
               isDisabled ? "opacity-60" : ""
@@ -1271,7 +1300,6 @@ const SwapPage = () => {
             </div>
           </div>
 
-          {/* Swap Button - Conditionally render skeleton before mount */}
           {!hasMounted ? (
             <Skeleton
               height={48}
@@ -1370,7 +1398,6 @@ const SwapPage = () => {
           toastOptions={{ className: "dark:bg-gray-700 dark:text-white" }}
         />
 
-        {/* Confirmation Modal - Access typed confirmationDetails */}
         {showConfirmation && confirmationDetails && (
           <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
             <div className="bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-sm border border-gray-600">
@@ -1381,7 +1408,6 @@ const SwapPage = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">From:</span>
                   <span className="text-white font-medium">
-                    {/* Use optional chaining or nullish coalescing for symbols */}
                     {confirmationDetails.inputAmount}{" "}
                     {confirmationDetails.inputSymbol ?? ""}
                   </span>
@@ -1426,19 +1452,17 @@ const SwapPage = () => {
           roundDetails &&
           roundDetails.USDM &&
           roundDetails.tokenAddress &&
-          roundDetails.USDM !== ZeroAddress &&
-          roundDetails.tokenAddress !== ZeroAddress &&
           !isRoundEnded && (
             <div className="text-center mt-4">
               <p className="text-xs text-gray-500">
-                Not working?{" "}
+                Want more buttons?{" "}
                 <a
                   href={`https://app.uniswap.org/swap?inputCurrency=${roundDetails.USDM}&outputCurrency=${roundDetails.tokenAddress}&chain=optimism`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-blue-300 underline transition-colors"
                 >
-                  Try on Uniswap
+                  Try Uniswap
                 </a>
               </p>
             </div>
@@ -1450,7 +1474,6 @@ const SwapPage = () => {
 
 export default SwapPage;
 
-// Inject styles for number input reset - client-side only
 if (typeof window !== "undefined") {
   let styles = `
     input[type=number].number-input-reset::-webkit-inner-spin-button,
@@ -1464,7 +1487,6 @@ if (typeof window !== "undefined") {
   const styleSheet = document.createElement("style");
   styleSheet.type = "text/css";
   styleSheet.innerText = styles;
-  // Avoid adding multiple times on HMR
   if (!document.getElementById("number-input-reset-styles")) {
     styleSheet.id = "number-input-reset-styles";
     document.head.appendChild(styleSheet);

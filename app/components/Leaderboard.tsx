@@ -209,7 +209,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                           : "text-gray-400"
                       }`}
                     >
-                      {entry.realizedPNL.toFixed(2)}
+                      {parseFloat(entry.realizedPNL.toFixed(2)).toLocaleString(
+                        "en-US",
+                        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                      )}
                     </TableCell>
                     <TableCell
                       className={`p-4 text-right ${
@@ -220,7 +223,12 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                           : "text-gray-400"
                       }`}
                     >
-                      {entry.unrealizedPNL.toFixed(2)}
+                      {parseFloat(
+                        entry.unrealizedPNL.toFixed(2)
+                      ).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </TableCell>
                     <TableCell
                       className={`p-4 text-right ${
@@ -231,7 +239,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                           : "text-gray-400"
                       }`}
                     >
-                      {entry.totalPNL.toFixed(2)}
+                      {parseFloat(entry.totalPNL.toFixed(2)).toLocaleString(
+                        "en-US",
+                        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                      )}
                     </TableCell>
                   </TableRow>
                 );

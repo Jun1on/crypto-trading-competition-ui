@@ -93,7 +93,7 @@ const Header = () => {
   return (
     <header className="bg-gray-900 text-white py-4 relative">
       {pathname !== "/swap" ? (
-        <nav className="flex justify-center space-x-8">
+        <nav className="flex justify-center">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -112,7 +112,7 @@ const Header = () => {
           })}
         </nav>
       ) : (
-        <div className="flex justify-center space-x-8">
+        <div className="flex justify-center">
           <Link href="/swap">
             <span className="px-3 py-2 text-lg font-medium border-b-2 text-orange-500 border-orange-500">
               Swap
