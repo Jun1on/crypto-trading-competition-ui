@@ -12,6 +12,8 @@ import toast, { Toaster } from "react-hot-toast";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
+const REFRESH_INTERVAL = 5000;
+
 // Helper function to format time in MM:SS
 const formatTime = (totalSeconds: number): string => {
   if (totalSeconds < 0) return "00:00";
@@ -65,7 +67,7 @@ const RoundDashboard = () => {
 
   useEffect(() => {
     fetchRoundInfo();
-    const interval = setInterval(fetchRoundInfo, 5000);
+    const interval = setInterval(fetchRoundInfo, REFRESH_INTERVAL);
     return () => clearInterval(interval);
   }, []);
 
@@ -229,13 +231,11 @@ const RoundDashboard = () => {
                 roundDetails.USDM &&
                 roundDetails.tokenAddress !== ethers.ZeroAddress && (
                   <a
-                    href={!isRoundEnded ? `/swap` : undefined}
+                    href="/swap"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`ml-3 flex items-center text-blue-400 hover:text-blue-300 transition-colors ${
-                      isRoundEnded
-                        ? "opacity-50 pointer-events-none cursor-not-allowed"
-                        : ""
+                      isRoundEnded ? "opacity-70" : ""
                     }`}
                     title={
                       isRoundEnded ? "Round has ended" : "Trade on Uniswap"
@@ -251,8 +251,7 @@ const RoundDashboard = () => {
       </div>
       <Toaster />
 
-      {/* Timer Text - Bottom Right */}
-      <div className="absolute bottom-3 right-3 text-sm font-medium text-white">
+      <div className="absolute bottom-5.5 right-5.5 text-sm font-medium text-white">
         {loading ? (
           <Skeleton
             width={50} // Adjusted width for smaller space

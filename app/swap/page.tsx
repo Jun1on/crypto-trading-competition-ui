@@ -15,9 +15,20 @@ import {
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import { getLatestRoundDetails } from "../../utils/contract"; // Assuming this path is correct
 import toast, { Toaster } from "react-hot-toast";
-import { ArrowDownIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowDownIcon,
+  QuestionMarkCircleIcon,
+  ArrowTopRightOnSquareIcon,
+} from "@heroicons/react/24/outline";
+import Link from "next/link";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 // Import viem types used in adapters
 import type {
   Account,
@@ -221,6 +232,7 @@ const SwapPage = () => {
     airdropAmount: number; // Added based on contract details type
     USDM: string | null;
     usdmDecimals: number;
+    usdmSymbol: string;
   } | null>(null);
   const [isRoundLoading, setIsRoundLoading] = useState(true);
   const [isRoundEnded, setIsRoundEnded] = useState(false);
@@ -233,18 +245,13 @@ const SwapPage = () => {
   const [inputBalance, setInputBalance] = useState<bigint>(BigInt(0));
   const [outputBalance, setOutputBalance] = useState<bigint>(BigInt(0));
 
-  // Settings State
-  const [showSettings, setShowSettings] = useState(false);
-  const [useDefaultSlippage, setUseDefaultSlippage] = useState(true);
-  const [manualSlippage, setManualSlippage] = useState<string>("");
-
   // Transaction State
   const [isSwapping, setIsSwapping] = useState(false);
 
   // Price Info & Confirmation Modal State
   const [priceInfo, setPriceInfo] = useState<string | null>(null);
+  const [priceImpact, setPriceImpact] = useState<number | null>(null);
   const [showConfirmation, setShowConfirmation] = useState<boolean>(false);
-  // Use the specific interface for confirmation details state
   const [confirmationDetails, setConfirmationDetails] =
     useState<SwapConfirmationDetails | null>(null);
 
@@ -280,6 +287,7 @@ const SwapPage = () => {
       const tokenDecimals = 18;
       const usdmDecimals = 18;
       const tokenSymbol = details.symbol;
+      const usdmSymbol = "USDM";
 
       setRoundDetails({
         currentRound: details.latestRound,
@@ -292,6 +300,7 @@ const SwapPage = () => {
         airdropAmount: details.airdropPerParticipantUSDM,
         USDM: details.USDM,
         usdmDecimals: usdmDecimals,
+        usdmSymbol: usdmSymbol,
       });
     } catch (error) {
       console.error("Error fetching round info:", error);
@@ -341,7 +350,14 @@ const SwapPage = () => {
         return;
       }
 
-      const { tokenAddress, USDM, tokenDecimals, usdmDecimals } = roundDetails;
+      const {
+        tokenAddress,
+        USDM,
+        tokenDecimals,
+        usdmDecimals,
+        usdmSymbol,
+        tokenSymbol,
+      } = roundDetails;
       const inputTokenAddr = isInputUSDM ? USDM : tokenAddress;
       const outputTokenAddr = isInputUSDM ? tokenAddress : USDM;
       const inputDec = isInputUSDM ? usdmDecimals : tokenDecimals;
@@ -351,6 +367,7 @@ const SwapPage = () => {
       if (!isInputValid) {
         setOutputAmount("");
         setPriceInfo(null);
+        setPriceImpact(null);
       }
 
       if (
@@ -361,7 +378,6 @@ const SwapPage = () => {
       ) {
         console.error("Invalid token addresses for multicall.");
         setOutputAmount("0");
-        setPriceInfo(null);
         setIsCalculatingOutput(false);
         return;
       }
@@ -382,7 +398,7 @@ const SwapPage = () => {
           [accountAddress]
         );
 
-        // --- Prepare Multicall Array ---
+        // --- Prepare Multicall Array (Start with balances) ---
         const calls = [
           {
             target: inputTokenAddr,
@@ -396,29 +412,56 @@ const SwapPage = () => {
           },
         ];
 
-        // --- Conditionally Add getAmountsOut Call ---
-        let amountsOutCallData: string | undefined = undefined;
+        // --- Conditionally Add Main getAmountsOut & Spot Price getAmountsOut Calls ---
+        let mainAmountsOutCallData: string | undefined = undefined;
+        let spotAmountsOutCallData: string | undefined = undefined;
+        let smallAmountIn: bigint = BigInt(0);
+
         if (isInputValid) {
           try {
             const amountIn = parseUnits(inputAmount, inputDec);
-            const path = [inputTokenAddr, outputTokenAddr];
-            amountsOutCallData = routerInterface.encodeFunctionData(
+            const path = [inputTokenAddr!, outputTokenAddr!]; // Assert non-null after check
+
+            // Main call data
+            mainAmountsOutCallData = routerInterface.encodeFunctionData(
               "getAmountsOut",
               [amountIn, path]
             );
             calls.push({
               target: V2_ROUTER_ADDRESS,
               allowFailure: true,
-              callData: amountsOutCallData,
+              callData: mainAmountsOutCallData,
             });
+
+            // Spot price call data
+            // Use 0.1 USDM or 1 Token as the small amount for spot price check
+            smallAmountIn = isInputUSDM
+              ? parseUnits("0.1", inputDec)
+              : parseUnits("1", inputDec);
+            // Ensure smallAmountIn is not zero, otherwise skip spot price check
+            if (smallAmountIn > BigInt(0)) {
+              spotAmountsOutCallData = routerInterface.encodeFunctionData(
+                "getAmountsOut",
+                [smallAmountIn, path]
+              );
+              calls.push({
+                target: V2_ROUTER_ADDRESS,
+                allowFailure: true, // Allow spot price check to fail (e.g., insufficient liquidity for even small amount)
+                callData: spotAmountsOutCallData,
+              });
+            } else {
+              console.warn(
+                "Small amount for spot price check is zero, skipping."
+              );
+            }
           } catch (parseError) {
             console.error(
-              "Error parsing input amount for getAmountsOut:",
+              "Error parsing input or preparing amountsOut calls:",
               parseError
             );
-            setOutputAmount("0"); // Indicate error if parsing fails
+            setOutputAmount("0");
             setPriceInfo(null);
-            // Don't proceed with multicall if amountsOut call data failed
+            setPriceImpact(null);
             setIsCalculatingOutput(false);
             return;
           }
@@ -442,8 +485,9 @@ const SwapPage = () => {
 
         // --- Decode Results ---
         const [balanceInResult, balanceOutResult] = results;
-        // amountsOutResult is only present if isInputValid was true
-        const amountsOutResult = results.length > 2 ? results[2] : undefined;
+        // Amounts out results are conditional based on isInputValid
+        const mainAmountsOutResult = calls.length > 2 ? results[2] : undefined;
+        const spotAmountsOutResult = calls.length > 3 ? results[3] : undefined;
 
         // Update Balances (Always attempt)
         if (balanceInResult?.success) {
@@ -466,47 +510,109 @@ const SwapPage = () => {
           console.warn("Multicall: Failed to fetch output balance");
         }
 
-        // Update Output Amount and Price Info (Only if calculated)
-        if (isInputValid && amountsOutResult?.success) {
-          const decodedAmounts = routerInterface.decodeFunctionResult(
+        // --- Update Output Amount, Price Info, and Price Impact ---
+        if (isInputValid && mainAmountsOutResult?.success) {
+          const decodedMainAmounts = routerInterface.decodeFunctionResult(
             "getAmountsOut",
-            amountsOutResult.returnData
+            mainAmountsOutResult.returnData
           )[0];
-          const estimatedOutputBigInt = decodedAmounts[1] as bigint;
+          const estimatedOutputBigInt = decodedMainAmounts[1] as bigint;
           const estimatedOutputStr = formatUnits(
             estimatedOutputBigInt,
             outputDec
           );
           setOutputAmount(estimatedOutputStr);
 
-          // Calculate Price Info
+          // Calculate Effective Rate
           const inputNum = parseFloat(inputAmount);
           const outputNum = parseFloat(estimatedOutputStr);
-          if (inputNum > 0 && outputNum > 0) {
-            // Corrected price calculation logic
-            const rate = isInputUSDM
-              ? inputNum / outputNum
-              : outputNum / inputNum;
-            const priceStr = `1 ${roundDetails.tokenSymbol} = $${rate.toFixed(
-              4
-            )}`;
+          const effectiveRate =
+            inputNum > 0 && outputNum > 0 ? outputNum / inputNum : 0;
+
+          // Calculate Price Info string (using effective rate)
+          if (effectiveRate > 0) {
+            const priceStr = isInputUSDM
+              ? `1 ${tokenSymbol} ≈ $${(1 / effectiveRate).toFixed(4)}`
+              : `1 ${tokenSymbol} ≈ $${effectiveRate.toFixed(4)}`;
             setPriceInfo(priceStr);
           } else {
             setPriceInfo(null);
           }
+
+          // Calculate Spot Rate and Price Impact (if spot call succeeded)
+          if (spotAmountsOutResult?.success && smallAmountIn > BigInt(0)) {
+            try {
+              const decodedSpotAmounts = routerInterface.decodeFunctionResult(
+                "getAmountsOut",
+                spotAmountsOutResult.returnData
+              )[0];
+              const spotOutputBigInt = decodedSpotAmounts[1] as bigint;
+
+              // Convert smallAmountIn and spotOutputBigInt for calculation
+              // Use ethers FixedNumber for potentially better precision
+              const smallInFixed = ethers.FixedNumber.fromValue(
+                smallAmountIn,
+                inputDec
+              );
+              const spotOutFixed = ethers.FixedNumber.fromValue(
+                spotOutputBigInt,
+                outputDec
+              );
+
+              if (!smallInFixed.isZero() && !spotOutFixed.isZero()) {
+                const spotRateFixed = spotOutFixed.div(smallInFixed);
+                const effectiveRateFixed = ethers.FixedNumber.fromValue(
+                  estimatedOutputBigInt,
+                  outputDec
+                ).div(
+                  ethers.FixedNumber.fromValue(
+                    parseUnits(inputAmount, inputDec),
+                    inputDec
+                  )
+                );
+
+                // Impact = ((spot - effective) / spot) * 100
+                const impactFixed = spotRateFixed
+                  .sub(effectiveRateFixed)
+                  .div(spotRateFixed)
+                  .mul(ethers.FixedNumber.fromValue(100));
+                // Convert to number, handle potential NaN/Infinity
+                const impactPercent = parseFloat(impactFixed.toString());
+                if (impactPercent > 0) {
+                  setPriceImpact(isNaN(impactPercent) ? null : impactPercent);
+                } else {
+                  setPriceImpact(0);
+                }
+              } else {
+                console.warn("Spot rate calculation yielded zero values.");
+                setPriceImpact(null);
+              }
+            } catch (spotError) {
+              console.error(
+                "Error decoding or calculating spot rate:",
+                spotError
+              );
+              setPriceImpact(null);
+            }
+          } else {
+            console.warn(
+              "Spot price call failed or was skipped, cannot calculate impact."
+            );
+            setPriceImpact(null); // No spot price, no impact
+          }
         } else if (isInputValid) {
-          // Handle case where getAmountsOut call failed or wasn't made
-          console.warn(
-            "Multicall: Failed to fetch getAmountsOut or input was invalid during fetch"
-          );
-          setOutputAmount("0"); // Indicate failure
+          // Handle case where main getAmountsOut call failed
+          console.warn("Multicall: Failed to fetch main getAmountsOut");
+          setOutputAmount("0");
           setPriceInfo(null);
+          setPriceImpact(null);
         }
         // If input was not valid, outputAmount/priceInfo were already reset earlier
       } catch (error) {
         console.error("Error during multicall execution:", error);
         setOutputAmount("0");
         setPriceInfo(null);
+        setPriceImpact(null);
       } finally {
         setIsCalculatingOutput(false);
       }
@@ -665,18 +771,6 @@ const SwapPage = () => {
     setInputAmount(formatUnits(inputBalance, decimals));
   };
 
-  const handleSlippageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // Allow empty, or numbers up to 99.9 with one decimal place
-    if (/^$|^[0-9]{1,2}(\.[0-9]?)?$|^99(\.9)?$/.test(value)) {
-      setManualSlippage(value);
-      // Auto switch to custom if user types
-      if (useDefaultSlippage) {
-        setUseDefaultSlippage(false);
-      }
-    }
-  };
-
   const handleSwap = async () => {
     // --- Input Validation ---
     let errorMsg: string | null = null;
@@ -728,7 +822,6 @@ const SwapPage = () => {
       const inputTokenAddr = isInputUSDM ? USDM! : tokenAddress!;
       const outputTokenAddr = isInputUSDM ? tokenAddress! : USDM!;
       const inputDec = isInputUSDM ? usdmDecimals : tokenDecimals;
-      const outputDec = isInputUSDM ? tokenDecimals : usdmDecimals;
 
       const router = new ethers.Contract(
         V2_ROUTER_ADDRESS,
@@ -737,33 +830,8 @@ const SwapPage = () => {
       );
       const amountIn = parseUnits(inputAmount, inputDec);
 
-      // Calculate amountOutMin based on slippage
-      const expectedOutput = parseUnits(outputAmount, outputDec);
-
-      let slippageTolerance: number;
-      if (useDefaultSlippage) {
-        slippageTolerance = DEFAULT_SLIPPAGE_TOLERANCE;
-      } else {
-        const manualVal = parseFloat(manualSlippage);
-        // If empty or invalid, use HIGH_SLIPPAGE, otherwise use manual % / 100
-        slippageTolerance =
-          !isNaN(manualVal) && manualVal > 0 && manualVal <= 99.9
-            ? manualVal / 100
-            : HIGH_SLIPPAGE_TOLERANCE;
-      }
-
-      // Clamp slippage just in case
-      const safeSlippage = Math.max(0, Math.min(slippageTolerance, 0.999));
-
-      // BigInt math for amountOutMin
-      const slippageFactor = BigInt(Math.floor((1 - safeSlippage) * 10000)); // e.g., 0.5% -> 9950
-      const amountOutMin = (expectedOutput * slippageFactor) / BigInt(10000);
-
-      if (amountOutMin <= BigInt(0)) {
-        throw new Error(
-          "Calculated minimum output is zero. Check slippage or price."
-        );
-      }
+      // --- Set amountOutMin directly to 0 ---
+      const amountOutMin = BigInt(0);
 
       const path = [inputTokenAddr, outputTokenAddr];
       const deadline = Math.floor(Date.now() / 1000) + 60 * 10; // 10 minutes
@@ -772,7 +840,7 @@ const SwapPage = () => {
 
       const tx = await router.swapExactTokensForTokens(
         amountIn,
-        amountOutMin,
+        amountOutMin, // Pass 0 here
         path,
         accountAddress!,
         deadline
@@ -847,7 +915,7 @@ const SwapPage = () => {
               // Use the actual post-swap balance for display
               finalOutputAmountStr = formatBalance(
                 finalOutputBalanceBigInt,
-                outputDec
+                inputDec
               );
             }
           } catch (balanceError) {
@@ -1053,7 +1121,7 @@ const SwapPage = () => {
       <div className="flex justify-center items-start pt-10 px-4">
         <div
           className={`bg-gray-800 p-4 rounded-2xl shadow-xl w-full max-w-md border border-gray-700 relative overflow-hidden ${
-            priceInfo ? "pb-2" : ""
+            priceInfo ? "pb-0" : ""
           }`}
         >
           {/* Loading/Disabled Overlay */}
@@ -1247,9 +1315,46 @@ const SwapPage = () => {
             </button>
           )}
 
-          {priceInfo && (
-            <div className="text-xs text-gray-400 text-center mt-2 px-2">
-              {priceInfo}
+          {(priceInfo || priceImpact !== null) && (
+            <div className="text-xs text-gray-400 text-center mt-2 mb-2 px-2 py-1 rounded-md flex justify-center items-center space-x-2">
+              {priceInfo && <span>{priceInfo}</span>}
+              {priceImpact !== null && (
+                <span
+                  className={`font-medium ${
+                    priceImpact > 15
+                      ? "text-red-500"
+                      : priceImpact > 5
+                      ? "text-yellow-400"
+                      : "text-gray-400"
+                  }`}
+                >
+                  (Impact:{" "}
+                  {priceImpact < 0
+                    ? priceImpact.toFixed(2)
+                    : `-${priceImpact.toFixed(2)}`}
+                  %)
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <QuestionMarkCircleIcon className="w-4 h-4 ml-1 inline-block text-gray-500 hover:text-gray-300 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      The difference between the current<br></br>market price
+                      and the price for your<br></br>trade due to its size
+                      <div className="mt-2 text-xs">
+                        <Link
+                          href="https://support.uniswap.org/hc/en-us/articles/8671539602317-What-is-price-impact"
+                          className="text-blue-400 hover:text-blue-300 flex items-center"
+                          onClick={(e) => e.stopPropagation()}
+                          target="_blank"
+                        >
+                          <span>Learn more</span>
+                          <ArrowTopRightOnSquareIcon className="w-3 h-3 ml-1" />
+                        </Link>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </span>
+              )}
             </div>
           )}
 

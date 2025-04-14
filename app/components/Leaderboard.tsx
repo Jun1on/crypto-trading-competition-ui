@@ -3,6 +3,7 @@ import React from "react";
 import Link from "next/link";
 import { getNickname } from "../../utils/contract";
 import { Table, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import { usePathname } from "next/navigation";
 import {
   ArrowTopRightOnSquareIcon,
   InformationCircleIcon,
@@ -38,6 +39,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
     return <div>Data mismatch</div>;
   }
 
+  // Get the current path
+  const pathname = usePathname();
+
   // Create regular player data
   const playerData = participants
     .map((player, index) => {
@@ -72,6 +76,14 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
     (a, b) => b.totalPNL - a.totalPNL
   );
 
+  // Determine the tooltip message based on the path
+  const tooltipMessage =
+    pathname === "/leaderboard"
+      ? "This leaderboard is cumulative. It includes PNL from all rounds."
+      : "This leaderboard only counts PNL from the current round.";
+
+  const columnName = pathname === "/leaderboard" ? "All Time PNL" : "Round PNL";
+
   return (
     <TooltipProvider>
       <div className="container mx-auto max-w-4xl">
@@ -84,13 +96,43 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                 </th>
                 <th className="p-2 text-left text-white font-medium">Player</th>
                 <th className="p-2 text-right text-white font-medium">
-                  Realized PNL
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex items-center justify-end cursor-help">
+                        Realized PNL
+                        <InformationCircleIcon className="w-4 h-4 ml-1 text-gray-400" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>PNL from USDM balance</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </th>
                 <th className="p-2 text-right text-white font-medium">
-                  Unrealized PNL
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex items-center justify-end cursor-help">
+                        Unrealized PNL
+                        <InformationCircleIcon className="w-4 h-4 ml-1 text-gray-400" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>PNL if player sold all their tokens now</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </th>
                 <th className="p-2 text-right text-white font-medium">
-                  Total PNL
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex items-center justify-end cursor-help">
+                        {columnName}
+                        <InformationCircleIcon className="w-4 h-4 ml-1 text-gray-400" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{tooltipMessage}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </th>
               </tr>
             </thead>
@@ -124,7 +166,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                             <TooltipContent>
                               <p>
                                 Market Maker PNL is equal to the value lost by
-                                players
+                                players.
                               </p>
                               <div className="mt-2 text-xs">
                                 <Link
