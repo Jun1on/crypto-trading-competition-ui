@@ -229,11 +229,7 @@ const RoundDashboard = () => {
                 roundDetails.USDM &&
                 roundDetails.tokenAddress !== ethers.ZeroAddress && (
                   <a
-                    href={
-                      !isRoundEnded
-                        ? `https://app.uniswap.org/swap?inputCurrency=${roundDetails.USDM}&outputCurrency=${roundDetails.tokenAddress}&chain=optimism`
-                        : undefined
-                    }
+                    href={!isRoundEnded ? `/swap` : undefined}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`ml-3 flex items-center text-blue-400 hover:text-blue-300 transition-colors ${
@@ -244,9 +240,6 @@ const RoundDashboard = () => {
                     title={
                       isRoundEnded ? "Round has ended" : "Trade on Uniswap"
                     }
-                    onClick={(e) => {
-                      if (isRoundEnded) e.preventDefault();
-                    }} // Prevent click if ended
                   >
                     <ArrowsRightLeftIcon className="w-4 h-4 mr-1" />
                     <span>Trade</span>
