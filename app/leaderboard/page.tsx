@@ -5,6 +5,8 @@ import { fetchPNLData } from "../../utils/contract";
 import { useAccount } from "wagmi";
 import LiveUpdateIndicator from "../components/LiveUpdateIndicator";
 
+const REFRESH_INTERVAL = 4000;
+
 export default function LeaderboardPage() {
   const { address } = useAccount();
   const [participants, setParticipants] = useState<string[]>([]);
@@ -51,7 +53,7 @@ export default function LeaderboardPage() {
 
     fetchData();
 
-    const intervalId = setInterval(fetchData, 4000);
+    const intervalId = setInterval(fetchData, REFRESH_INTERVAL);
 
     return () => clearInterval(intervalId);
   }, [isLoading]);

@@ -6,6 +6,8 @@ import LiveUpdateIndicator from "./components/LiveUpdateIndicator";
 import { useAccount } from "wagmi";
 import { fetchLatestRoundPNL } from "../utils/contract";
 
+const REFRESH_INTERVAL = 5000;
+
 export default function Home() {
   const { address } = useAccount();
   const [pnlData, setPnlData] = useState({
@@ -40,7 +42,7 @@ export default function Home() {
 
     fetchData();
 
-    const intervalId = setInterval(fetchData, 5000);
+    const intervalId = setInterval(fetchData, REFRESH_INTERVAL);
     return () => clearInterval(intervalId);
   }, [loading]);
 
