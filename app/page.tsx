@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Leaderboard from "./components/Leaderboard";
-import RoundDashboard from "./components/RoundDashboard";
+import RoundDashboard from "./components/RoundDashboard.tsx";
 import LiveUpdateIndicator from "./components/LiveUpdateIndicator";
 import { useAccount } from "wagmi";
 import { fetchLatestRoundPNL } from "../utils/contract";

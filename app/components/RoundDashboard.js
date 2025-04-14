@@ -8,6 +8,14 @@ import toast, { Toaster } from 'react-hot-toast';
 import Skeleton from 'react-loading-skeleton';
 import "react-loading-skeleton/dist/skeleton.css";
 
+// Helper function to format time in MM:SS
+const formatTime = (totalSeconds: number): string => {
+    if (totalSeconds < 0) return "00:00";
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
+
 const RoundDashboard = () => {
     const [roundDetails, setRoundDetails] = useState({
         currentRound: 0,
@@ -20,6 +28,9 @@ const RoundDashboard = () => {
         USDM: ''
     });
     const [loading, setLoading] = useState(true);
+    const [timeLeft, setTimeLeft] = useState < number | null > (null);
+    const [progress, setProgress] = useState < number > (0);
+    const [isRoundEnded, setIsRoundEnded] = useState < boolean > (false);
 
     // Custom skeleton theme to match dark background
     const skeletonBaseColor = "#2d3748"; // dark gray
@@ -51,6 +62,57 @@ const RoundDashboard = () => {
         const interval = setInterval(fetchRoundInfo, 10000);
         return () => clearInterval(interval);
     }, []);
+
+    // Timer effect
+    useEffect(() => {
+        if (loading || roundDetails.startTime === 0 || roundDetails.endTime === 0) {
+            setIsRoundEnded(false); // Reset if loading or times are invalid
+            setProgress(0);
+            setTimeLeft(null);
+            return;
+        }
+
+        const calculateTime = () => {
+            const now = Math.floor(Date.now() / 1000); // Current time in seconds
+            const { startTime, endTime } = roundDetails;
+            const totalDuration = endTime - startTime;
+            const remaining = endTime - now;
+            const elapsed = now - startTime;
+
+            if (totalDuration <= 0) { // Avoid division by zero or negative duration
+                setIsRoundEnded(true);
+                setTimeLeft(0);
+                setProgress(100);
+                return null; // Stop interval if duration is invalid
+            }
+
+            if (remaining <= 0) {
+                setTimeLeft(0);
+                setProgress(100);
+                setIsRoundEnded(true);
+                return null; // Stop interval
+            } else {
+                setTimeLeft(remaining);
+                setProgress(Math.min(100, Math.max(0, (elapsed / totalDuration) * 100)));
+                setIsRoundEnded(false);
+                return true; // Continue interval
+            }
+        };
+
+        // Initial calculation
+        const shouldContinue = calculateTime();
+        if (!shouldContinue) return; // Don't start interval if round already ended or duration invalid
+
+        const timerInterval = setInterval(() => {
+            if (!calculateTime()) {
+                clearInterval(timerInterval);
+            }
+        }, 1000);
+
+        // Cleanup interval on unmount or dependency change
+        return () => clearInterval(timerInterval);
+
+    }, [roundDetails.startTime, roundDetails.endTime, loading]);
 
     const handleCopy = () => {
         const { tokenAddress } = roundDetails;
@@ -91,7 +153,33 @@ const RoundDashboard = () => {
                         </div>
                     )}
                 </div>
-                <div className="flex items-center text-sm text-gray-400">
+
+                {/* Timer and Progress Bar */}
+                <div className="w-full max-w-md mt-4">
+                    <div className="text-center text-xl mb-2">
+                        {loading ? (
+                            <Skeleton width={100} height={28} baseColor={skeletonBaseColor} highlightColor={skeletonHighlightColor} />
+                        ) : isRoundEnded ? (
+                            <span className="text-red-500 font-semibold">Round Ended</span>
+                        ) : timeLeft !== null ? (
+                            <span className="font-mono">{formatTime(timeLeft)}</span>
+                        ) : (
+                            <Skeleton width={100} height={28} baseColor={skeletonBaseColor} highlightColor={skeletonHighlightColor} />
+                        )}
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                        {loading ? (
+                            <div className="bg-gray-600 h-2.5 rounded-full" style={{ width: '0%' }}></div>
+                        ) : (
+                            <div
+                                className={`bg-blue-500 h-2.5 rounded-full transition-all duration-1000 ease-linear ${isRoundEnded ? 'bg-red-500' : 'bg-blue-500'}`}
+                                style={{ width: `${progress}%` }}
+                            ></div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex items-center text-sm text-gray-400 mt-4">
                     {loading ? (
                         <Skeleton width={272} height={20} baseColor={skeletonBaseColor} highlightColor={skeletonHighlightColor} />
                     ) : (
@@ -118,11 +206,13 @@ const RoundDashboard = () => {
                             )}
                             {roundDetails.tokenAddress && roundDetails.USDM && roundDetails.tokenAddress !== ethers.ZeroAddress && (
                                 <a
-                                    href={`https://app.uniswap.org/swap?inputCurrency=${roundDetails.USDM}&outputCurrency=${roundDetails.tokenAddress}&chain=optimism`}
+                                    href={!isRoundEnded ? `https://app.uniswap.org/swap?inputCurrency=${roundDetails.USDM}&outputCurrency=${roundDetails.tokenAddress}&chain=optimism` : undefined}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="ml-3 flex items-center text-blue-400 hover:text-blue-300 transition-colors"
-                                    title="Trade on Uniswap"
+                                    className={`ml-3 flex items-center text-blue-400 hover:text-blue-300 transition-colors ${isRoundEnded ? 'opacity-50 pointer-events-none cursor-not-allowed' : ''
+                                        }`}
+                                    title={isRoundEnded ? "Round has ended" : "Trade on Uniswap"}
+                                    onClick={(e) => { if (isRoundEnded) e.preventDefault(); }} // Prevent click if ended
                                 >
                                     <ArrowsRightLeftIcon className="w-4 h-4 mr-1" />
                                     <span>Trade</span>
