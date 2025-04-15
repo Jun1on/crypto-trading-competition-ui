@@ -160,7 +160,7 @@ function walletClientToSigner(walletClient: WalletClient): Signer {
 // Updated to accept bigint
 const formatBalance = (value: bigint, decimals: number = 18): string => {
   try {
-    const formatted = formatUnits(value, decimals);
+    const formatted = formatUnits(value);
     const num = parseFloat(formatted);
     if (isNaN(num)) return "0.0000";
     // Improved formatting to avoid tiny numbers in scientific notation
@@ -520,10 +520,7 @@ const SwapPage = () => {
             mainAmountsOutResult.returnData
           )[0];
           const estimatedOutputBigInt = decodedMainAmounts[1] as bigint;
-          const estimatedOutputStr = formatUnits(
-            estimatedOutputBigInt,
-            outputDec
-          );
+          const estimatedOutputStr = formatUnits(estimatedOutputBigInt);
           setOutputAmount(estimatedOutputStr);
 
           // Calculate Effective Rate
@@ -730,6 +727,12 @@ const SwapPage = () => {
 
   // --- Handlers ---
 
+  const handleSwapDirectionAndMax = () => {
+    handleSwapDirection();
+    if (!roundDetails || !provider || !isConnected) return;
+    setInputAmount(formatUnits(outputBalance));
+  };
+
   const handleSwapDirection = () => {
     if (isCalculatingOutput || isSwapping) return; // Prevent swap during calculation/swap
 
@@ -783,11 +786,7 @@ const SwapPage = () => {
 
   const handleMaxInput = () => {
     if (!roundDetails || !provider || !isConnected) return;
-    const decimals = isInputUSDM
-      ? roundDetails.usdmDecimals
-      : roundDetails.tokenDecimals;
-    // Format full bigint balance
-    setInputAmount(formatUnits(inputBalance, decimals));
+    setInputAmount(formatUnits(inputBalance));
   };
 
   const handleSwap = async (ignorePreStart = false) => {
@@ -1302,7 +1301,7 @@ const SwapPage = () => {
                 />
               ) : outputToken && isConnected ? (
                 <button
-                  onClick={handleSwapDirection}
+                  onClick={handleSwapDirectionAndMax}
                   disabled={isDisabled || inputBalance <= BigInt(0)}
                   className={`text-xs text-gray-400 hover:text-white disabled:opacity-50 ${
                     isDisabled ? "cursor-not-allowed" : "cursor-pointer"
