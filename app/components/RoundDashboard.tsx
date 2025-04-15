@@ -17,6 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useSimpleMode } from "./Header";
 
 const REFRESH_INTERVAL = 5000;
 
@@ -31,6 +32,7 @@ const formatTime = (totalSeconds: number): string => {
 };
 
 const RoundDashboard = () => {
+  const { isSimpleMode } = useSimpleMode();
   const [roundDetails, setRoundDetails] = useState({
     currentRound: 0,
     tokenAddress: null,
@@ -163,7 +165,7 @@ const RoundDashboard = () => {
       : null;
 
   return (
-    <div className="bg-gradient-to-r from-gray-800 to-gray-900 mx-auto rounded-lg shadow-lg p-10 mb-5 max-w-4xl relative overflow-hidden pb-5">
+    <div className="bg-gradient-to-r from-gray-800 to-gray-900 mx-auto rounded-lg shadow-lg p-10 pb-3 mb-5 max-w-4xl relative overflow-hidden">
       <div className={`flex flex-col items-center text-white gap-4`}>
         <div className="text-3xl font-bold">
           {loading ? (
@@ -214,27 +216,32 @@ const RoundDashboard = () => {
           )}
         </div>
 
-        {/* Address and Links */}
-        <div className="flex items-center text-sm text-gray-400 mt-2">
+        <div className="flex items-center text-sm text-gray-400">
           {" "}
-          {/* Reduced margin top */}
           {loading ? (
-            <Skeleton
-              width={272}
-              height={20}
-              baseColor={skeletonBaseColor}
-              highlightColor={skeletonHighlightColor}
-            />
+            <div className="py-2">
+              <Skeleton
+                width={350}
+                height={20}
+                baseColor={skeletonBaseColor}
+                highlightColor={skeletonHighlightColor}
+              />
+            </div>
           ) : (
             <>
-              <span className="font-mono">{truncatedAddress}</span>
-              <button
-                onClick={handleCopy}
-                className="ml-2 p-1 hover:text-gray-300 transition-colors cursor-pointer"
-                title="Copy address"
-              >
-                <DocumentDuplicateIcon className="w-4 h-4" />
-              </button>
+              {!isSimpleMode && (
+                <>
+                  <span className="font-mono">{truncatedAddress}</span>
+                  <button
+                    onClick={handleCopy}
+                    className="ml-2 p-1 hover:text-gray-300 transition-colors cursor-pointer"
+                    title="Copy address"
+                  >
+                    <DocumentDuplicateIcon className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+
               {roundDetails.tokenAddress &&
                 roundDetails.tokenAddress !== ethers.ZeroAddress &&
                 (isPreStart ? (
@@ -245,9 +252,9 @@ const RoundDashboard = () => {
                           href={`https://dexscreener.com/optimism/${roundDetails.tokenAddress}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="ml-3 flex items-center text-blue-400 hover:text-blue-300 transition-colors opacity-70"
+                          className="ml-3 flex items-center text-blue-400 hover:text-blue-300 transition-colors opacity-70 px-3 py-2 text-base font-medium"
                         >
-                          <ChartBarIcon className="w-4 h-4 mr-1" />
+                          <ChartBarIcon className="w-5 h-5 mr-2" />
                           <span>Chart</span>
                         </a>
                       </TooltipTrigger>
@@ -263,10 +270,10 @@ const RoundDashboard = () => {
                     href={`https://dexscreener.com/optimism/${roundDetails.tokenAddress}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="ml-3 flex items-center text-blue-400 hover:text-blue-300 transition-colors"
+                    className="ml-3 flex items-center text-blue-400 hover:text-blue-300 transition-colors px-3 py-2 text-base font-medium"
                     title="View on DexScreener"
                   >
-                    <ChartBarIcon className="w-4 h-4 mr-1" />
+                    <ChartBarIcon className="w-5 h-5 mr-2" />
                     <span>Chart</span>
                   </a>
                 ))}
@@ -277,14 +284,14 @@ const RoundDashboard = () => {
                     href="/swap"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`ml-3 flex items-center text-blue-400 hover:text-blue-300 transition-colors ${
+                    className={`ml-3 flex items-center text-blue-400 hover:text-blue-300 transition-colors px-3 py-2 text-base font-medium ${
                       isRoundEnded || isPreStart ? "opacity-70" : ""
                     }`}
                     title={
                       isRoundEnded ? "Round has ended" : "Trade on Uniswap"
                     }
                   >
-                    <ArrowsRightLeftIcon className="w-4 h-4 mr-1" />
+                    <ArrowsRightLeftIcon className="w-5 h-5 mr-2" />
                     <span>Trade</span>
                   </a>
                 )}
@@ -294,11 +301,11 @@ const RoundDashboard = () => {
       </div>
       <Toaster />
 
-      <div className="absolute bottom-5.5 right-5.5 text-sm font-medium text-white">
+      <div className="absolute bottom-5 right-5 text-sm font-medium text-white">
         {loading ? (
           <Skeleton
-            width={50}
-            height={14}
+            width={60}
+            height={20}
             baseColor={skeletonBaseColor}
             highlightColor={skeletonHighlightColor}
           />
@@ -313,8 +320,8 @@ const RoundDashboard = () => {
           formatTime(timeLeft)
         ) : (
           <Skeleton
-            width={50}
-            height={14}
+            width={60}
+            height={20}
             baseColor={skeletonBaseColor}
             highlightColor={skeletonHighlightColor}
           />

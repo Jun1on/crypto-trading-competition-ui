@@ -38,7 +38,7 @@ import type {
   PublicClient,
   WalletClient,
 } from "viem";
-
+import { useSimpleMode } from "@/app/components/Header";
 // --- Constants ---
 const V2_ROUTER_ADDRESS = "0x4A7b5Da61326A6379179b40d00F57E5bbDC962c2";
 // Add Multicall3 address for Optimism
@@ -188,6 +188,7 @@ interface SwapConfirmationDetails {
 
 // --- Component ---
 const SwapPage = () => {
+  const { isSimpleMode } = useSimpleMode();
   // Wallet State - Use wagmi v2 hooks
   const { address: accountAddress, isConnected } = useAccount();
   // Ensure clients are of the expected type or undefined
@@ -261,7 +262,6 @@ const SwapPage = () => {
 
   // Add state for pre-start warning
   const [isPreStart, setIsPreStart] = useState(false);
-  const [showPreStartWarning, setShowPreStartWarning] = useState(false);
 
   // Skeleton Theme
   const skeletonBaseColor = "#2d3748";
@@ -302,7 +302,7 @@ const SwapPage = () => {
         tokenName: details.name,
         tokenSymbol: tokenSymbol,
         tokenDecimals: tokenDecimals,
-        startTime: details.startTimestamp,
+        startTime: details.startTimestamp + 1000,
         endTime: details.endTimestamp,
         airdropAmount: details.airdropPerParticipantUSDM,
         USDM: details.USDM,
@@ -825,12 +825,6 @@ const SwapPage = () => {
       return;
     }
 
-    // Check if we're in pre-start phase and show warning
-    if (isPreStart && !ignorePreStart) {
-      setShowPreStartWarning(true);
-      return;
-    }
-
     // --- Proceed with Swap ---
     setIsSwapping(true);
     const toastId = toast.loading("Preparing swap...");
@@ -938,10 +932,7 @@ const SwapPage = () => {
                   balanceOutResult.returnData
                 )[0] as bigint;
               // Use the actual post-swap balance for display
-              finalOutputAmountStr = formatBalance(
-                finalOutputBalanceBigInt,
-                inputDec
-              );
+              finalOutputAmountStr = formatBalance(finalOutputBalanceBigInt);
             }
           } catch (balanceError) {
             console.error(
@@ -1079,7 +1070,7 @@ const SwapPage = () => {
     if (isSwapping) return "Swapping...";
 
     const now = Date.now() / 1000;
-    if (roundDetails?.startTime > 0 && now < roundDetails.startTime) {
+    if (roundDetails?.startTime > 0 && now < roundDetails.startTime - 2) {
       return "Round Not Started";
     }
 
@@ -1145,22 +1136,30 @@ const SwapPage = () => {
   return (
     <>
       <div className="flex flex-col items-center px-4">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <h1 className="text-5xl mb-8 font-semibold text-white cursor-help">
-                Uniswap Lite
-              </h1>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p className="max-w-[250px]">
-                - No complicated settings
-                <br />- Easier to use
-                <br />- Faster
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        {isSimpleMode ? (
+          <h1 className="text-5xl mb-8 font-semibold text-white">
+            {isInputUSDM
+              ? `Buy $${roundDetails?.tokenSymbol || "TOKEN"}`
+              : `Sell $${roundDetails?.tokenSymbol || "TOKEN"}`}
+          </h1>
+        ) : (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <h1 className="text-5xl mb-8 font-semibold text-white cursor-help">
+                  Uniswap Lite
+                </h1>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p className="max-w-[250px]">
+                  - No complicated settings
+                  <br />- Easier to use
+                  <br />- Faster
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
 
         <div
           className={`bg-gray-800 p-4 rounded-2xl shadow-xl w-full max-w-md border border-gray-700 relative overflow-hidden ${
@@ -1199,11 +1198,18 @@ const SwapPage = () => {
                     <p className="text-white">
                       Round has not started yet.
                       <br />
-                      Your swap WILL fail unless you wait until the round
+                      Your swap will fail unless you wait until the round
                       starts.
                     </p>
                   </div>
                 )}
+              {isSwapping && (
+                <div className="text-center">
+                  <p className="text-white">
+                    Use MetaMask to confirm the transaction.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -1231,8 +1237,7 @@ const SwapPage = () => {
                       : "cursor-pointer"
                   }`}
                 >
-                  Balance:{" "}
-                  {formatBalance(inputToken.balance, inputToken.decimals)}
+                  Balance: {formatBalance(inputToken.balance)}
                   <span className="text-blue-400 ml-1">(Max)</span>
                 </button>
               ) : null}
@@ -1251,9 +1256,14 @@ const SwapPage = () => {
                 className="text-2xl font-mono bg-transparent text-white w-full focus:outline-none mr-4 disabled:opacity-50 number-input-reset"
               />
               {inputToken ? (
-                <div className="bg-gray-800 text-white font-semibold py-2 px-4 rounded-xl flex items-center space-x-2 shrink-0">
+                <button
+                  onClick={handleSwapDirection}
+                  disabled={isDisabled || !inputToken || !outputToken}
+                  className="bg-gray-800 text-white font-semibold py-2 px-4 rounded-xl flex items-center space-x-2 shrink-0 transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                  aria-label="Swap input and output tokens"
+                >
                   <span className="text-lg">{inputToken.symbol}</span>
-                </div>
+                </button>
               ) : (
                 <Skeleton
                   width={100}
@@ -1268,10 +1278,8 @@ const SwapPage = () => {
           <div className="flex justify-center my-[-12px] z-10 relative">
             <button
               onClick={handleSwapDirection}
-              disabled={
-                isDisabled || !inputToken || !outputToken || isCalculatingOutput
-              }
-              className="bg-gray-600 p-1.5 rounded-full text-gray-300 border-2 border-gray-800 hover:bg-gray-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isDisabled || !inputToken || !outputToken}
+              className="bg-gray-600 p-1.5 rounded-full text-gray-300 border-2 border-gray-800 hover:bg-gray-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
               aria-label="Swap input and output tokens"
             >
               <ArrowDownIcon className="w-5 h-5" />
@@ -1293,10 +1301,15 @@ const SwapPage = () => {
                   highlightColor={skeletonHighlightColor}
                 />
               ) : outputToken && isConnected ? (
-                <span className="text-xs text-gray-400">
-                  Balance:{" "}
-                  {formatBalance(outputToken.balance, outputToken.decimals)}
-                </span>
+                <button
+                  onClick={handleSwapDirection}
+                  disabled={isDisabled || inputBalance <= BigInt(0)}
+                  className={`text-xs text-gray-400 hover:text-white disabled:opacity-50 ${
+                    isDisabled ? "cursor-not-allowed" : "cursor-pointer"
+                  }`}
+                >
+                  Balance: {formatBalance(outputToken.balance)}
+                </button>
               ) : null}
             </div>
             <div className="flex justify-between items-center">
@@ -1310,9 +1323,14 @@ const SwapPage = () => {
                 className="text-2xl font-mono bg-transparent text-white w-full focus:outline-none mr-4 disabled:opacity-50 number-input-reset"
               />
               {outputToken ? (
-                <div className="bg-gray-800 text-white font-semibold py-2 px-4 rounded-xl flex items-center space-x-2 shrink-0">
+                <button
+                  onClick={handleSwapDirection}
+                  disabled={isDisabled || !inputToken || !outputToken}
+                  className="bg-gray-800 text-white font-semibold py-2 px-4 rounded-xl flex items-center space-x-2 shrink-0 transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                  aria-label="Swap input and output tokens"
+                >
                   <span className="text-lg">{outputToken.symbol}</span>
-                </div>
+                </button>
               ) : (
                 <Skeleton
                   width={100}
@@ -1338,6 +1356,8 @@ const SwapPage = () => {
               className={`w-full py-3 px-4 rounded-xl text-lg font-semibold transition-colors duration-200 flex justify-center items-center ${
                 isButtonDisabled
                   ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                  : getButtonText === "Round Not Started"
+                  ? "bg-yellow-600 hover:bg-yellow-700 text-white cursor-pointer"
                   : "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
               }`}
             >
@@ -1370,7 +1390,7 @@ const SwapPage = () => {
           {(priceInfo || priceImpact !== null) && (
             <div className="text-xs text-gray-400 text-center mt-2 mb-2 px-2 py-1 rounded-md flex justify-center items-center space-x-2">
               {priceInfo && <span>{priceInfo}</span>}
-              {priceImpact !== null && (
+              {priceImpact !== null && !isSimpleMode && (
                 <span
                   className={`font-medium ${
                     priceImpact > 15
@@ -1470,70 +1490,17 @@ const SwapPage = () => {
             </div>
           </div>
         )}
-
-        {/* Pre-start Warning Modal */}
-        {showPreStartWarning && (
-          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-sm border border-red-600">
-              <div className="flex items-center justify-center mb-4">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="w-8 h-8 text-red-500"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-white text-center mb-4">
-                Round Has Not Started
-              </h3>
-              <div className="text-white mb-4 text-center">
-                <p className="mb-3">
-                  ⚠️ Your swap WILL FAIL if you confirm it before the round
-                  starts ⚠️
-                </p>
-                <p className="text-sm text-gray-300">
-                  The current round has not officially started yet. If you
-                  proceed with the swap, your transaction will be rejected by
-                  the contract.
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowPreStartWarning(false)}
-                  className="mt-2 w-full py-2 px-4 rounded-lg bg-gray-600 hover:bg-gray-700 text-white font-medium transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    setShowPreStartWarning(false);
-                    // Call handleSwap with ignorePreStart=true
-                    handleSwap(true);
-                  }}
-                  className="mt-2 w-full py-2 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors cursor-pointer"
-                >
-                  Proceed Anyway
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
       <div>
         {hasMounted &&
           roundDetails &&
           roundDetails.USDM &&
           roundDetails.tokenAddress &&
-          !isRoundEnded && (
+          !isRoundEnded &&
+          !isSimpleMode && (
             <div className="text-center mt-4">
               <p className="text-xs text-gray-500">
-                Feeling adventurous? Try{" "}
+                Want more buttons? Try{" "}
                 <a
                   href={`https://app.uniswap.org/swap?inputCurrency=${roundDetails.USDM}&outputCurrency=${roundDetails.tokenAddress}&chain=optimism`}
                   target="_blank"

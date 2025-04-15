@@ -14,6 +14,7 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
+import { useSimpleMode } from "./Header";
 
 interface LeaderboardProps {
   participants: string[];
@@ -34,6 +35,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
 }) => {
   // Get the current path
   const pathname = usePathname();
+  // Get simple mode state
+  const { isSimpleMode } = useSimpleMode();
 
   if (
     participants.length !== realizedPNLs.length ||
@@ -72,9 +75,14 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   };
 
   // Combine and sort all entries
-  const leaderboardData = [...playerData, marketMakerEntry].sort(
+  let leaderboardData = [...playerData, marketMakerEntry].sort(
     (a, b) => b.totalPNL - a.totalPNL
   );
+
+  // Filter out market maker in simple mode
+  if (isSimpleMode) {
+    leaderboardData = leaderboardData.filter((entry) => !entry.isMarketMaker);
+  }
 
   // Determine the tooltip message based on the path
   const tooltipMessage =
@@ -95,32 +103,36 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                   Rank
                 </th>
                 <th className="p-2 text-left text-white font-medium">Player</th>
-                <th className="p-2 text-right text-white font-medium">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex items-center justify-end cursor-help">
-                        Realized PNL
-                        <InformationCircleIcon className="w-4 h-4 ml-1 text-gray-400" />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>PNL from USDM balance</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </th>
-                <th className="p-2 text-right text-white font-medium">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex items-center justify-end cursor-help">
-                        Unrealized PNL
-                        <InformationCircleIcon className="w-4 h-4 ml-1 text-gray-400" />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>PNL if player sold all their tokens now</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </th>
+                {!isSimpleMode && (
+                  <>
+                    <th className="p-2 text-right text-white font-medium">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex items-center justify-end cursor-help">
+                            Realized PNL
+                            <InformationCircleIcon className="w-4 h-4 ml-1 text-gray-400" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>PNL from USDM balance</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </th>
+                    <th className="p-2 text-right text-white font-medium">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex items-center justify-end cursor-help">
+                            Unrealized PNL
+                            <InformationCircleIcon className="w-4 h-4 ml-1 text-gray-400" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>PNL if player sold all their tokens now</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </th>
+                  </>
+                )}
                 <th className="p-2 text-right text-white font-medium">
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -148,10 +160,23 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                       isMe ? "bg-orange-900/30 ring-1 ring-orange-500" : ""
                     }`;
 
+                // Calculate rank - skip incrementing for market maker
+                const displayRank = entry.isMarketMaker
+                  ? ""
+                  : (
+                      index +
+                      1 -
+                      leaderboardData
+                        .slice(0, index)
+                        .filter((e) => e.isMarketMaker).length
+                    )
+                      .toString()
+                      .padStart(3, "0");
+
                 return (
                   <TableRow key={index} className={rowClass}>
                     <TableCell className="p-2 text-center">
-                      {(index + 1).toString().padStart(3, "0")}
+                      {displayRank}
                     </TableCell>
                     <TableCell className="p-2">
                       <div className="flex items-center">
@@ -200,36 +225,42 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                         )}
                       </div>
                     </TableCell>
-                    <TableCell
-                      className={`p-2 text-right ${
-                        entry.realizedPNL < 0
-                          ? "text-red-400"
-                          : entry.realizedPNL > 0
-                          ? "text-green-400"
-                          : "text-gray-400"
-                      }`}
-                    >
-                      {parseFloat(entry.realizedPNL.toFixed(2)).toLocaleString(
-                        "en-US",
-                        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-                      )}
-                    </TableCell>
-                    <TableCell
-                      className={`p-4 text-right ${
-                        entry.unrealizedPNL < 0
-                          ? "text-red-400"
-                          : entry.unrealizedPNL > 0
-                          ? "text-green-400"
-                          : "text-gray-400"
-                      }`}
-                    >
-                      {parseFloat(
-                        entry.unrealizedPNL.toFixed(2)
-                      ).toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </TableCell>
+                    {!isSimpleMode && (
+                      <>
+                        <TableCell
+                          className={`p-2 text-right ${
+                            entry.realizedPNL < 0
+                              ? "text-red-400"
+                              : entry.realizedPNL > 0
+                              ? "text-green-400"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          {parseFloat(
+                            entry.realizedPNL.toFixed(2)
+                          ).toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </TableCell>
+                        <TableCell
+                          className={`p-4 text-right ${
+                            entry.unrealizedPNL < 0
+                              ? "text-red-400"
+                              : entry.unrealizedPNL > 0
+                              ? "text-green-400"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          {parseFloat(
+                            entry.unrealizedPNL.toFixed(2)
+                          ).toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </TableCell>
+                      </>
+                    )}
                     <TableCell
                       className={`p-4 text-right ${
                         entry.totalPNL < 0
