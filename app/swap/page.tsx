@@ -634,6 +634,7 @@ const SwapPage = () => {
     provider,
     isRoundEnded,
     accountAddress,
+    isCalculatingOutput,
   ]);
 
   // Refactor triggerBalanceRefresh to use Multicall

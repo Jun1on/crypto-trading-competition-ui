@@ -122,7 +122,7 @@ const RoundDashboard = () => {
 
     // Cleanup interval on unmount or dependency change
     return () => clearInterval(timerInterval);
-  }, [roundDetails.startTime, roundDetails.endTime, loading]);
+  }, [roundDetails, roundDetails.startTime, roundDetails.endTime, loading]);
 
   const handleCopy = () => {
     const { tokenAddress } = roundDetails;
