@@ -11,6 +11,12 @@ import {
 import toast, { Toaster } from "react-hot-toast";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const REFRESH_INTERVAL = 5000;
 
@@ -39,6 +45,7 @@ const RoundDashboard = () => {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [progress, setProgress] = useState<number>(0);
   const [isRoundEnded, setIsRoundEnded] = useState<boolean>(false);
+  const [isPreStart, setIsPreStart] = useState<boolean>(false);
 
   // Custom skeleton theme to match dark background
   const skeletonBaseColor = "#2d3748"; // dark gray
@@ -75,6 +82,7 @@ const RoundDashboard = () => {
   useEffect(() => {
     if (loading || roundDetails.startTime === 0 || roundDetails.endTime === 0) {
       setIsRoundEnded(false); // Reset if loading or times are invalid
+      setIsPreStart(false); // Reset pre-start state
       setProgress(0);
       setTimeLeft(null);
       return;
@@ -87,9 +95,20 @@ const RoundDashboard = () => {
       const remaining = endTime - now;
       const elapsed = now - startTime;
 
+      // Check if we're in the pre-start phase
+      if (now < startTime) {
+        const preStartRemaining = startTime - now;
+        setTimeLeft(preStartRemaining);
+        setProgress(0); // 0% progress during pre-start
+        setIsRoundEnded(false);
+        setIsPreStart(true);
+        return true; // Continue interval
+      }
+
       if (totalDuration <= 0) {
         // Avoid division by zero or negative duration
         setIsRoundEnded(true);
+        setIsPreStart(false);
         setTimeLeft(0);
         setProgress(100);
         return null; // Stop interval if duration is invalid
@@ -99,6 +118,7 @@ const RoundDashboard = () => {
         setTimeLeft(0);
         setProgress(100);
         setIsRoundEnded(true);
+        setIsPreStart(false);
         return null; // Stop interval
       } else {
         setTimeLeft(remaining);
@@ -106,6 +126,7 @@ const RoundDashboard = () => {
           Math.min(100, Math.max(0, (elapsed / totalDuration) * 100))
         );
         setIsRoundEnded(false);
+        setIsPreStart(false);
         return true; // Continue interval
       }
     };
@@ -143,7 +164,7 @@ const RoundDashboard = () => {
 
   return (
     <div className="bg-gradient-to-r from-gray-800 to-gray-900 mx-auto rounded-lg shadow-lg p-10 mb-5 max-w-4xl relative overflow-hidden pb-5">
-      <div className="flex flex-col items-center text-white gap-4">
+      <div className={`flex flex-col items-center text-white gap-4`}>
         <div className="text-3xl font-bold">
           {loading ? (
             <Skeleton
@@ -215,7 +236,29 @@ const RoundDashboard = () => {
                 <DocumentDuplicateIcon className="w-4 h-4" />
               </button>
               {roundDetails.tokenAddress &&
-                roundDetails.tokenAddress !== ethers.ZeroAddress && (
+                roundDetails.tokenAddress !== ethers.ZeroAddress &&
+                (isPreStart ? (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a
+                          href={`https://dexscreener.com/optimism/${roundDetails.tokenAddress}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-3 flex items-center text-blue-400 hover:text-blue-300 transition-colors opacity-70"
+                        >
+                          <ChartBarIcon className="w-4 h-4 mr-1" />
+                          <span>Chart</span>
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">
+                          Chart loading... please refresh if not loading
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
                   <a
                     href={`https://dexscreener.com/optimism/${roundDetails.tokenAddress}`}
                     target="_blank"
@@ -226,7 +269,7 @@ const RoundDashboard = () => {
                     <ChartBarIcon className="w-4 h-4 mr-1" />
                     <span>Chart</span>
                   </a>
-                )}
+                ))}
               {roundDetails.tokenAddress &&
                 roundDetails.USDM &&
                 roundDetails.tokenAddress !== ethers.ZeroAddress && (
@@ -235,7 +278,7 @@ const RoundDashboard = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`ml-3 flex items-center text-blue-400 hover:text-blue-300 transition-colors ${
-                      isRoundEnded ? "opacity-70" : ""
+                      isRoundEnded || isPreStart ? "opacity-70" : ""
                     }`}
                     title={
                       isRoundEnded ? "Round has ended" : "Trade on Uniswap"
@@ -254,13 +297,18 @@ const RoundDashboard = () => {
       <div className="absolute bottom-5.5 right-5.5 text-sm font-medium text-white">
         {loading ? (
           <Skeleton
-            width={50} // Adjusted width for smaller space
+            width={50}
             height={14}
             baseColor={skeletonBaseColor}
             highlightColor={skeletonHighlightColor}
           />
         ) : isRoundEnded ? (
           "Ended"
+        ) : isPreStart && timeLeft !== null ? (
+          <span className="flex items-center">
+            <span className="w-3 h-3 bg-yellow-500 rounded-full mr-2 animate-pulse"></span>
+            Round starts in {timeLeft}s
+          </span>
         ) : timeLeft !== null ? (
           formatTime(timeLeft)
         ) : (
@@ -281,9 +329,22 @@ const RoundDashboard = () => {
           ) : (
             <div
               className={`h-full transition-all duration-1000 ease-linear ${
-                isRoundEnded ? "bg-red-500" : "bg-blue-500"
+                isRoundEnded
+                  ? "bg-red-500"
+                  : isPreStart
+                  ? "bg-yellow-500"
+                  : "bg-blue-500"
               }`}
-              style={{ width: `${progress}%` }}
+              style={{
+                width: `${
+                  isPreStart && timeLeft !== null
+                    ? Math.min(
+                        100,
+                        Math.max(0, ((60 - Math.min(timeLeft, 60)) / 60) * 100)
+                      )
+                    : progress
+                }%`,
+              }}
             ></div>
           )}
         </div>
