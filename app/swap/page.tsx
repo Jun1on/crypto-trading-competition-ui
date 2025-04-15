@@ -59,10 +59,8 @@ const MULTICALL_ABI = [
   "function aggregate3(tuple(address target, bool allowFailure, bytes callData)[] calls) public view returns (tuple(bool success, bytes returnData)[])",
 ];
 
-const HIGH_SLIPPAGE_TOLERANCE = 0.999;
-const DEFAULT_SLIPPAGE_TOLERANCE = 0.999;
 const REFETCH_INTERVAL = 10000;
-const RECALCULATE_INTERVAL = 500;
+const RECALCULATE_INTERVAL = 1000;
 
 // --- Ethers Adapters for Wagmi v2 --- (Further Refinement)
 function publicClientToProvider(publicClient: PublicClient): Provider {
@@ -261,6 +259,10 @@ const SwapPage = () => {
     setHasMounted(true);
   }, []);
 
+  // Add state for pre-start warning
+  const [isPreStart, setIsPreStart] = useState(false);
+  const [showPreStartWarning, setShowPreStartWarning] = useState(false);
+
   // Skeleton Theme
   const skeletonBaseColor = "#2d3748";
   const skeletonHighlightColor = "#4a5568";
@@ -283,6 +285,11 @@ const SwapPage = () => {
       const ended = details.endTimestamp > 0 && now >= details.endTimestamp;
       setIsRoundEnded(ended);
 
+      // Check if round has not started yet
+      const isBeforeStart =
+        details.startTimestamp > 0 && now < details.startTimestamp;
+      setIsPreStart(isBeforeStart);
+
       // --- Hardcode Decimals & Use Existing Symbols ---
       const tokenDecimals = 18;
       const usdmDecimals = 18;
@@ -295,7 +302,7 @@ const SwapPage = () => {
         tokenName: details.name,
         tokenSymbol: tokenSymbol,
         tokenDecimals: tokenDecimals,
-        startTime: details.startTimestamp,
+        startTime: details.startTimestamp + 5000,
         endTime: details.endTimestamp,
         airdropAmount: details.airdropPerParticipantUSDM,
         USDM: details.USDM,
@@ -783,7 +790,7 @@ const SwapPage = () => {
     setInputAmount(formatUnits(inputBalance, decimals));
   };
 
-  const handleSwap = async () => {
+  const handleSwap = async (ignorePreStart = false) => {
     // --- Input Validation ---
     let errorMsg: string | null = null;
     if (!isConnected) errorMsg = "Connect Wallet";
@@ -815,6 +822,12 @@ const SwapPage = () => {
 
     if (errorMsg) {
       toast.error(errorMsg);
+      return;
+    }
+
+    // Check if we're in pre-start phase and show warning
+    if (isPreStart && !ignorePreStart) {
+      setShowPreStartWarning(true);
       return;
     }
 
@@ -1059,16 +1072,17 @@ const SwapPage = () => {
           return `Insufficient ${inputToken.symbol} Balance`;
         }
       } catch {
-        return "Invalid Amount"; // Handle potential parse error
+        return "Invalid Amount";
       }
     }
 
-    // If input is valid & balance sufficient, button primarily relies on `isButtonDisabled`
-    // Show "Swap" unless swapping is in progress.
     if (isSwapping) return "Swapping...";
 
-    // Removed direct check on outputAmount here to reduce flickering.
-    // isButtonDisabled handles the case where outputAmount is invalid/zero.
+    const now = Date.now() / 1000;
+    if (roundDetails?.startTime > 0 && now < roundDetails.startTime) {
+      return "Round Not Started";
+    }
+
     return "Swap";
   }, [
     hasMounted,
@@ -1154,9 +1168,9 @@ const SwapPage = () => {
           }`}
         >
           {(isSwapping || (isRoundLoading && !roundDetails)) && (
-            <div className="absolute inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-20">
+            <div className="absolute inset-0 bg-gray-800 bg-opacity-50 flex flex-col items-center justify-center z-20 p-4">
               <svg
-                className="animate-spin h-8 w-8 text-white"
+                className="animate-spin h-8 w-8 text-white mb-3"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -1176,6 +1190,20 @@ const SwapPage = () => {
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 ></path>{" "}
               </svg>
+              {roundDetails?.startTime > 0 &&
+                Date.now() / 1000 < roundDetails.startTime && (
+                  <div className="text-center">
+                    <p className="text-red-500 font-bold text-lg mb-1">
+                      WARNING
+                    </p>
+                    <p className="text-white">
+                      Round has not started yet.
+                      <br />
+                      Your swap WILL fail unless you wait until the round
+                      starts.
+                    </p>
+                  </div>
+                )}
             </div>
           )}
 
@@ -1305,7 +1333,7 @@ const SwapPage = () => {
             />
           ) : (
             <button
-              onClick={handleSwap}
+              onClick={() => handleSwap()}
               disabled={isButtonDisabled}
               className={`w-full py-3 px-4 rounded-xl text-lg font-semibold transition-colors duration-200 flex justify-center items-center ${
                 isButtonDisabled
@@ -1439,6 +1467,60 @@ const SwapPage = () => {
               >
                 Close
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Pre-start Warning Modal */}
+        {showPreStartWarning && (
+          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-sm border border-red-600">
+              <div className="flex items-center justify-center mb-4">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="w-8 h-8 text-red-500"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-white text-center mb-4">
+                Round Has Not Started
+              </h3>
+              <div className="text-white mb-4 text-center">
+                <p className="mb-3">
+                  ⚠️ Your swap WILL FAIL if you confirm it before the round
+                  starts ⚠️
+                </p>
+                <p className="text-sm text-gray-300">
+                  The current round has not officially started yet. If you
+                  proceed with the swap, your transaction will be rejected by
+                  the contract.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowPreStartWarning(false)}
+                  className="mt-2 w-full py-2 px-4 rounded-lg bg-gray-600 hover:bg-gray-700 text-white font-medium transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPreStartWarning(false);
+                    // Call handleSwap with ignorePreStart=true
+                    handleSwap(true);
+                  }}
+                  className="mt-2 w-full py-2 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors cursor-pointer"
+                >
+                  Proceed Anyway
+                </button>
+              </div>
             </div>
           </div>
         )}
