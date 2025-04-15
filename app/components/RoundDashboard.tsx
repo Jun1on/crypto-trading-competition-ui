@@ -11,25 +11,11 @@ import {
 import toast, { Toaster } from "react-hot-toast";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useSimpleMode } from "./Header";
+import ExtendedChartDropdown from "./ExtendedChartDropdown";
+import RoundTimer from "./RoundTimer";
 
 const REFRESH_INTERVAL = 5000;
-
-// Helper function to format time in MM:SS
-const formatTime = (totalSeconds: number): string => {
-  if (totalSeconds < 0) return "00:00";
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes.toString().padStart(2, "0")}:${seconds
-    .toString()
-    .padStart(2, "0")}`;
-};
 
 const RoundDashboard = () => {
   const { isSimpleMode } = useSimpleMode();
@@ -46,12 +32,9 @@ const RoundDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [progress, setProgress] = useState<number>(0);
-  const [isRoundEnded, setIsRoundEnded] = useState<boolean>(false);
-  const [isPreStart, setIsPreStart] = useState<boolean>(false);
 
-  // Custom skeleton theme to match dark background
-  const skeletonBaseColor = "#2d3748"; // dark gray
-  const skeletonHighlightColor = "#4a5568"; // slightly lighter gray
+  const skeletonBaseColor = "#2d3748";
+  const skeletonHighlightColor = "#4a5568";
 
   const fetchRoundInfo = async () => {
     try {
@@ -80,11 +63,9 @@ const RoundDashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Timer effect
+  // Timer effect: update only timeLeft and progress
   useEffect(() => {
     if (loading || roundDetails.startTime === 0 || roundDetails.endTime === 0) {
-      setIsRoundEnded(false); // Reset if loading or times are invalid
-      setIsPreStart(false); // Reset pre-start state
       setProgress(0);
       setTimeLeft(null);
       return;
@@ -97,55 +78,35 @@ const RoundDashboard = () => {
       const remaining = endTime - now;
       const elapsed = now - startTime;
 
-      // Check if we're in the pre-start phase
       if (now < startTime) {
-        const preStartRemaining = startTime - now;
-        setTimeLeft(preStartRemaining);
-        setProgress(0); // 0% progress during pre-start
-        setIsRoundEnded(false);
-        setIsPreStart(true);
-        return true; // Continue interval
+        setTimeLeft(startTime - now);
+        setProgress(0);
+        return true;
       }
 
-      if (totalDuration <= 0) {
-        // Avoid division by zero or negative duration
-        setIsRoundEnded(true);
-        setIsPreStart(false);
+      if (totalDuration <= 0 || remaining <= 0) {
         setTimeLeft(0);
         setProgress(100);
-        return null; // Stop interval if duration is invalid
-      }
-
-      if (remaining <= 0) {
-        setTimeLeft(0);
-        setProgress(100);
-        setIsRoundEnded(true);
-        setIsPreStart(false);
-        return null; // Stop interval
+        return null;
       } else {
         setTimeLeft(remaining);
         setProgress(
           Math.min(100, Math.max(0, (elapsed / totalDuration) * 100))
         );
-        setIsRoundEnded(false);
-        setIsPreStart(false);
-        return true; // Continue interval
+        return true;
       }
     };
 
-    // Initial calculation
     const shouldContinue = calculateTime();
     if (!shouldContinue) return;
-
     const timerInterval = setInterval(() => {
       if (!calculateTime()) {
         clearInterval(timerInterval);
       }
     }, 1000);
 
-    // Cleanup interval on unmount or dependency change
     return () => clearInterval(timerInterval);
-  }, [roundDetails, roundDetails.startTime, roundDetails.endTime, loading]);
+  }, [roundDetails, loading]);
 
   const handleCopy = () => {
     const { tokenAddress } = roundDetails;
@@ -164,9 +125,14 @@ const RoundDashboard = () => {
         )}...${roundDetails.tokenAddress.slice(-4)}`
       : null;
 
+  // Compute derived values on render based on current time
+  const now = Math.floor(Date.now() / 1000);
+  const isPreStart = !loading && roundDetails.startTime > now;
+  const isRoundEnded = !loading && roundDetails.endTime <= now;
+
   return (
-    <div className="bg-gradient-to-r from-gray-800 to-gray-900 mx-auto rounded-lg shadow-lg p-10 pb-3 mb-5 max-w-4xl relative overflow-hidden">
-      <div className={`flex flex-col items-center text-white gap-4`}>
+    <div className="bg-gradient-to-r from-gray-800 to-gray-900 mx-auto rounded-lg shadow-lg p-10 pb-3 mb-5 max-w-4xl relative">
+      <div className="flex flex-col items-center text-white gap-4">
         <div className="text-3xl font-bold">
           {loading ? (
             <Skeleton
@@ -217,7 +183,6 @@ const RoundDashboard = () => {
         </div>
 
         <div className="flex items-center text-sm text-gray-400">
-          {" "}
           {loading ? (
             <div className="py-2">
               <Skeleton
@@ -231,60 +196,35 @@ const RoundDashboard = () => {
             <>
               {!isSimpleMode && (
                 <>
-                  <span className="font-mono">{truncatedAddress}</span>
-                  <button
-                    onClick={handleCopy}
-                    className="ml-2 p-1 hover:text-gray-300 transition-colors cursor-pointer"
-                    title="Copy address"
-                  >
-                    <DocumentDuplicateIcon className="w-4 h-4" />
-                  </button>
+                  {!isSimpleMode && (
+                    <button
+                      onClick={handleCopy}
+                      className="ml-2 p-1 flex items-center hover:text-gray-300 transition-colors cursor-pointer"
+                      title="Copy address"
+                    >
+                      <span className="font-mono">{truncatedAddress}</span>
+                      <DocumentDuplicateIcon className="w-4 h-4 ml-1" />
+                    </button>
+                  )}
                 </>
               )}
 
               {roundDetails.tokenAddress &&
-                roundDetails.tokenAddress !== ethers.ZeroAddress &&
-                (isPreStart ? (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <a
-                          href={`https://dexscreener.com/optimism/${roundDetails.tokenAddress}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="ml-3 flex items-center text-blue-400 hover:text-blue-300 transition-colors opacity-70 px-3 py-2 text-base font-medium"
-                        >
-                          <ChartBarIcon className="w-5 h-5 mr-2" />
-                          <span>Chart</span>
-                        </a>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-xs">
-                          Chart loading... please refresh if not loading
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                ) : (
-                  <a
-                    href={`https://dexscreener.com/optimism/${roundDetails.tokenAddress}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ml-3 flex items-center text-blue-400 hover:text-blue-300 transition-colors px-3 py-2 text-base font-medium"
-                    title="View on DexScreener"
-                  >
-                    <ChartBarIcon className="w-5 h-5 mr-2" />
-                    <span>Chart</span>
-                  </a>
-                ))}
+                roundDetails.tokenAddress !== ethers.ZeroAddress && (
+                  <ExtendedChartDropdown
+                    roundDetails={roundDetails}
+                    isPreStart={isPreStart}
+                    isSimpleMode={isSimpleMode}
+                  />
+                )}
+
               {roundDetails.tokenAddress &&
-                roundDetails.USDM &&
                 roundDetails.tokenAddress !== ethers.ZeroAddress && (
                   <a
                     href="/swap"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`ml-3 flex items-center text-blue-400 hover:text-blue-300 transition-colors px-3 py-2 text-base font-medium ${
+                    className={`flex items-center text-blue-400 hover:text-blue-300 transition-colors px-3 py-2 text-base font-medium ml-2 ${
                       isRoundEnded || isPreStart ? "opacity-70" : ""
                     }`}
                     title={
@@ -295,67 +235,38 @@ const RoundDashboard = () => {
                     <span>Trade</span>
                   </a>
                 )}
+
+              {!isSimpleMode &&
+                roundDetails.tokenAddress &&
+                roundDetails.tokenAddress !== ethers.ZeroAddress && (
+                  <a
+                    href={`${process.env.NEXT_PUBLIC_BLOCK_EXPLORER_URL}/token/${roundDetails.tokenAddress}#balances`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-2 flex items-center text-blue-400 hover:text-blue-300 transition-colors px-3 py-2 text-base font-medium"
+                    title="View Holders on Etherscan"
+                  >
+                    <span>Holders</span>
+                  </a>
+                )}
             </>
           )}
         </div>
       </div>
       <Toaster />
 
-      <div className="absolute bottom-5 right-5 text-sm font-medium text-white">
-        {loading ? (
-          <Skeleton
-            width={60}
-            height={20}
-            baseColor={skeletonBaseColor}
-            highlightColor={skeletonHighlightColor}
-          />
-        ) : isRoundEnded ? (
-          "Ended"
-        ) : isPreStart && timeLeft !== null ? (
-          <span className="flex items-center">
-            <span className="w-3 h-3 bg-yellow-500 rounded-full mr-2 animate-pulse"></span>
-            Round starts in {timeLeft}s
-          </span>
-        ) : timeLeft !== null ? (
-          formatTime(timeLeft)
-        ) : (
-          <Skeleton
-            width={60}
-            height={20}
-            baseColor={skeletonBaseColor}
-            highlightColor={skeletonHighlightColor}
-          />
-        )}
-      </div>
+      <RoundTimer
+        loading={loading}
+        isRoundEnded={isRoundEnded}
+        isPreStart={isPreStart}
+        timeLeft={timeLeft}
+        progress={progress}
+        skeletonBaseColor={skeletonBaseColor}
+        skeletonHighlightColor={skeletonHighlightColor}
+      />
 
-      <div className="absolute bottom-0 left-0 right-0">
-        {" "}
-        <div className="w-full bg-gray-700 rounded-b-lg h-2 overflow-hidden">
-          {loading ? (
-            <div className="bg-gray-600 h-full" style={{ width: "0%" }}></div>
-          ) : (
-            <div
-              className={`h-full transition-all duration-1000 ease-linear ${
-                isRoundEnded
-                  ? "bg-red-500"
-                  : isPreStart
-                  ? "bg-yellow-500"
-                  : "bg-blue-500"
-              }`}
-              style={{
-                width: `${
-                  isPreStart && timeLeft !== null
-                    ? Math.min(
-                        100,
-                        Math.max(0, ((60 - Math.min(timeLeft, 60)) / 60) * 100)
-                      )
-                    : progress
-                }%`,
-              }}
-            ></div>
-          )}
-        </div>
-      </div>
+      {/* This progress bar is now redundant if it's part of RoundTimer,
+          but if you want to keep it separately you can compute using the same derived values */}
     </div>
   );
 };

@@ -198,46 +198,60 @@ const Header = () => {
             );
           })}
 
-          <div
-            className="relative"
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-          >
-            <span
-              className={`flex items-center text-lg font-medium cursor-pointer ${
-                pathname === "/participation" || pathname === "/learn"
-                  ? "text-orange-500"
-                  : "text-gray-300 hover:text-white"
-              } transition-all duration-200`}
-            >
-              <ChevronDownIcon
-                className={`w-5 h-5 ml-1 transition-transform duration-200`}
-              />
-            </span>
-
-            {isMoreMenuOpen && (
-              <div
-                className="absolute left-1/2 -translate-x-1/2 mt-2 w-48 bg-gray-800 rounded-md shadow-lg z-10 border border-gray-700"
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
+          {isSimpleMode ? (
+            <Link href="/learn">
+              <span
+                className={`px-3 py-2 text-lg font-medium border-b-2 ${
+                  pathname === "/learn"
+                    ? "text-orange-500 border-orange-500"
+                    : "text-gray-300 hover:text-white hover:border-gray-600 border-transparent"
+                } transition-all duration-200`}
               >
-                <div className="py-1">
-                  {moreNavItems.map((item) => {
-                    const isActive = pathname === item.href;
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
-                      >
-                        {item.name}
-                      </Link>
-                    );
-                  })}
+                Learn
+              </span>
+            </Link>
+          ) : (
+            <div
+              className="relative"
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
+              <span
+                className={`flex items-center text-lg font-medium cursor-pointer ${
+                  pathname === "/participation" || pathname === "/learn"
+                    ? "text-orange-500"
+                    : "text-gray-300 hover:text-white"
+                } transition-all duration-200`}
+              >
+                <ChevronDownIcon
+                  className={`w-5 h-5 ml-1 transition-transform duration-200`}
+                />
+              </span>
+
+              {isMoreMenuOpen && (
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 mt-2 w-48 bg-gray-800 rounded-md shadow-lg z-10 border border-gray-700"
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <div className="py-1">
+                    {moreNavItems.map((item) => {
+                      const isActive = pathname === item.href;
+                      return (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                        >
+                          {item.name}
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </nav>
       </div>
 
