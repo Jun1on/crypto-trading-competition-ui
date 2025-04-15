@@ -302,7 +302,7 @@ const SwapPage = () => {
         tokenName: details.name,
         tokenSymbol: tokenSymbol,
         tokenDecimals: tokenDecimals,
-        startTime: details.startTimestamp + 5000,
+        startTime: details.startTimestamp,
         endTime: details.endTimestamp,
         airdropAmount: details.airdropPerParticipantUSDM,
         USDM: details.USDM,
