@@ -433,11 +433,7 @@ const SwapPage = () => {
               callData: mainAmountsOutCallData,
             });
 
-            // Spot price call data
-            // Use 0.1 USDM or 1 Token as the small amount for spot price check
-            smallAmountIn = isInputUSDM
-              ? parseUnits("0.1", inputDec)
-              : parseUnits("1", inputDec);
+            smallAmountIn = parseUnits("0.0001", inputDec);
             // Ensure smallAmountIn is not zero, otherwise skip spot price check
             if (smallAmountIn > BigInt(0)) {
               spotAmountsOutCallData = routerInterface.encodeFunctionData(
@@ -1141,12 +1137,11 @@ const SwapPage = () => {
                 Uniswap Lite
               </h1>
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent side="bottom">
               <p className="max-w-[250px]">
                 - No complicated settings
-                <br />
-                - Simplified interface
-                <br />- Faster execution
+                <br />- Easier to use
+                <br />- Faster
               </p>
             </TooltipContent>
           </Tooltip>
@@ -1420,7 +1415,7 @@ const SwapPage = () => {
                   </span>
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t border-gray-700">
-                  <span className="text-gray-400">Tx Hash:</span>
+                  <span className="text-gray-400">Transaction Receipt:</span>
                   <a
                     href={`https://optimistic.etherscan.io/tx/${confirmationDetails.txHash}`}
                     target="_blank"
@@ -1455,14 +1450,14 @@ const SwapPage = () => {
           !isRoundEnded && (
             <div className="text-center mt-4">
               <p className="text-xs text-gray-500">
-                Want more buttons?{" "}
+                Feeling adventurous? Try{" "}
                 <a
                   href={`https://app.uniswap.org/swap?inputCurrency=${roundDetails.USDM}&outputCurrency=${roundDetails.tokenAddress}&chain=optimism`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-blue-300 underline transition-colors"
+                  className="hover:rainbow-glow underline transition-all"
                 >
-                  Try Uniswap
+                  Uniswap
                 </a>
               </p>
             </div>
@@ -1482,6 +1477,26 @@ if (typeof window !== "undefined") {
     }
     input[type=number].number-input-reset {
       -moz-appearance: textfield;
+    }
+    
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .hover\\:rainbow-glow:hover {
+      background: linear-gradient(
+        to right,
+        #ff00ff, #e100ff, #c300ff, #a600ff, #8900ff, #a600ff, #c300ff, #e100ff, #ff00ff
+      );
+      background-size: 200% auto;
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: gradient 1.5s linear infinite;
+      text-shadow: none;
+      font-weight: 500;
     }
     `;
   const styleSheet = document.createElement("style");
