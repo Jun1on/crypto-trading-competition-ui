@@ -32,15 +32,15 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   mmUnrealized = 0,
   me,
 }) => {
+  // Get the current path
+  const pathname = usePathname();
+
   if (
     participants.length !== realizedPNLs.length ||
     participants.length !== unrealizedPNLs.length
   ) {
     return <div>Data mismatch</div>;
   }
-
-  // Get the current path
-  const pathname = usePathname();
 
   // Create regular player data
   const playerData = participants
