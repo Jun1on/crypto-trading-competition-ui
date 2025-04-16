@@ -39,28 +39,17 @@ import type {
   WalletClient,
 } from "viem";
 import { useSimpleMode } from "@/app/components/Header";
-// --- Constants ---
-const V2_ROUTER_ADDRESS = "0x4A7b5Da61326A6379179b40d00F57E5bbDC962c2";
-// Add Multicall3 address for Optimism
-const MULTICALL3_ADDRESS = "0xcA11bde05977b3631167028862bE2a173976CA11";
-
-const ROUTER_ABI = [
-  "function getAmountsOut(uint256 amountIn, address[] memory path) view returns (uint256[] memory amounts)",
-  "function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] calldata path, address to, uint256 deadline) external returns (uint256[] memory amounts)",
-];
-const ERC20_ABI = [
-  "function balanceOf(address owner) view returns (uint256)",
-  "function decimals() view returns (uint8)",
-  "function symbol() view returns (string)",
-  "function name() view returns (string)",
-];
-// Add Multicall3 ABI fragment needed
-const MULTICALL_ABI = [
-  "function aggregate3(tuple(address target, bool allowFailure, bytes callData)[] calls) public view returns (tuple(bool success, bytes returnData)[])",
-];
+import {
+  multicallWithRpcCycling,
+  prepareBalanceCalls,
+  ERC20_ABI,
+  ROUTER_ABI,
+  MULTICALL_ABI,
+  V2_ROUTER_ADDRESS,
+} from "./swapUtils";
 
 const REFETCH_INTERVAL = 10000;
-const RECALCULATE_INTERVAL = 1000;
+const RECALCULATE_INTERVAL = 500;
 
 // --- Ethers Adapters for Wagmi v2 --- (Further Refinement)
 function publicClientToProvider(publicClient: PublicClient): Provider {
@@ -334,10 +323,6 @@ const SwapPage = () => {
   // Calculate Output Amount & Fetch Balances via Multicall (Handles Initial Load too)
   useEffect(() => {
     const calculateOutputAndFetchBalances = async () => {
-      console.log(
-        "[SwapPage] Triggering calculateOutputAndFetchBalances at",
-        new Date().toLocaleTimeString()
-      );
       setIsCalculatingOutput(true);
 
       const isInputValid =
@@ -393,32 +378,13 @@ const SwapPage = () => {
         // Prepare Interfaces
         const erc20Interface = new ethers.Interface(ERC20_ABI);
         const routerInterface = new ethers.Interface(ROUTER_ABI);
-        const multicallInterface = new ethers.Interface(MULTICALL_ABI);
-
         // --- Prepare Base Call Data (Balances) ---
-        const balanceInCallData = erc20Interface.encodeFunctionData(
-          "balanceOf",
-          [accountAddress]
-        );
-        const balanceOutCallData = erc20Interface.encodeFunctionData(
-          "balanceOf",
-          [accountAddress]
-        );
-
-        // --- Prepare Multicall Array (Start with balances) ---
-        const calls = [
-          {
-            target: inputTokenAddr,
-            allowFailure: true,
-            callData: balanceInCallData,
-          },
-          {
-            target: outputTokenAddr,
-            allowFailure: true,
-            callData: balanceOutCallData,
-          },
-        ];
-
+        const calls = prepareBalanceCalls({
+          inputTokenAddr,
+          outputTokenAddr,
+          accountAddress,
+          erc20Interface,
+        });
         // --- Conditionally Add Main getAmountsOut & Spot Price getAmountsOut Calls ---
         let mainAmountsOutCallData: string | undefined = undefined;
         let spotAmountsOutCallData: string | undefined = undefined;
@@ -469,22 +435,8 @@ const SwapPage = () => {
             return;
           }
         }
-
-        // Instantiate Multicall contract
-        const multicallContract = new ethers.Contract(
-          MULTICALL3_ADDRESS,
-          multicallInterface,
-          provider
-        );
-
-        console.log(
-          "[SwapPage] Making Multicall request (calls: ",
-          calls.length,
-          ")"
-        );
-        // Perform the batch call
-        const results: Array<{ success: boolean; returnData: string }> =
-          await multicallContract.aggregate3(calls);
+        // --- Multicall via cycling ---
+        const results = await multicallWithRpcCycling({ calls });
 
         // --- Decode Results ---
         const [balanceInResult, balanceOutResult] = results;
@@ -643,16 +595,13 @@ const SwapPage = () => {
 
   // Refactor triggerBalanceRefresh to use Multicall
   const triggerBalanceRefresh = useCallback(async () => {
-    if (!isConnected || !accountAddress || !roundDetails || !provider) return;
-
+    if (!isConnected || !accountAddress || !roundDetails) return;
     console.log(
       "[SwapPage] Triggering manual balance refresh via multicall..."
     );
-
     const { tokenAddress, USDM } = roundDetails;
     const inputTokenAddr = isInputUSDM ? USDM : tokenAddress;
     const outputTokenAddr = isInputUSDM ? tokenAddress : USDM;
-
     // Ensure addresses are valid
     if (
       !inputTokenAddr ||
@@ -663,43 +612,16 @@ const SwapPage = () => {
       console.error("Invalid token addresses for balance refresh.");
       return;
     }
-
     try {
       const erc20Interface = new ethers.Interface(ERC20_ABI);
-      const multicallInterface = new ethers.Interface(MULTICALL_ABI);
-
-      const balanceInCallData = erc20Interface.encodeFunctionData("balanceOf", [
+      const calls = prepareBalanceCalls({
+        inputTokenAddr,
+        outputTokenAddr,
         accountAddress,
-      ]);
-      const balanceOutCallData = erc20Interface.encodeFunctionData(
-        "balanceOf",
-        [accountAddress]
-      );
-
-      const calls = [
-        {
-          target: inputTokenAddr,
-          allowFailure: true,
-          callData: balanceInCallData,
-        },
-        {
-          target: outputTokenAddr,
-          allowFailure: true,
-          callData: balanceOutCallData,
-        },
-      ];
-
-      const multicallContract = new ethers.Contract(
-        MULTICALL3_ADDRESS,
-        multicallInterface,
-        provider
-      );
-
-      const results: Array<{ success: boolean; returnData: string }> =
-        await multicallContract.aggregate3(calls);
-
+        erc20Interface,
+      });
+      const results = await multicallWithRpcCycling({ calls });
       const [balanceInResult, balanceOutResult] = results;
-
       if (balanceInResult?.success) {
         const decodedBalance = erc20Interface.decodeFunctionResult(
           "balanceOf",
@@ -709,7 +631,6 @@ const SwapPage = () => {
       } else {
         console.warn("Manual Refresh: Failed to fetch input balance");
       }
-
       if (balanceOutResult?.success) {
         const decodedBalance = erc20Interface.decodeFunctionResult(
           "balanceOf",
@@ -721,9 +642,8 @@ const SwapPage = () => {
       }
     } catch (error) {
       console.error("Manual balance refresh failed:", error);
-      // Optionally show a toast here if needed
     }
-  }, [isConnected, accountAddress, roundDetails, provider, isInputUSDM]);
+  }, [isConnected, accountAddress, roundDetails, isInputUSDM]);
 
   // --- Handlers ---
 
@@ -1302,7 +1222,6 @@ const SwapPage = () => {
               ) : outputToken && isConnected ? (
                 <button
                   onClick={handleSwapDirectionAndMax}
-                  disabled={isDisabled || inputBalance <= BigInt(0)}
                   className={`text-xs text-gray-400 hover:text-white disabled:opacity-50 ${
                     isDisabled ? "cursor-not-allowed" : "cursor-pointer"
                   }`}
