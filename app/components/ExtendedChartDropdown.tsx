@@ -11,6 +11,10 @@ import {
 } from "@/components/ui/tooltip";
 
 const ExtendedChartDropdown = ({ roundDetails, isPreStart, isSimpleMode }) => {
+  // Always initialize hooks at the top level, regardless of conditions
+  const [dropdownVisible, setDropdownVisible] = useState(false);
+  const hideDropdownTimeout = useRef(null);
+
   // When in pre-start, show the Chart link with a tooltip.
   if (isPreStart) {
     return (
@@ -55,8 +59,6 @@ const ExtendedChartDropdown = ({ roundDetails, isPreStart, isSimpleMode }) => {
   }
 
   // Otherwise, use the extended dropdown behavior with a delayed unhover.
-  const [dropdownVisible, setDropdownVisible] = useState(false);
-  const hideDropdownTimeout = useRef(null);
 
   const handleMouseEnter = () => {
     if (hideDropdownTimeout.current) {
