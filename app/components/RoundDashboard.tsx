@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import { getLatestRoundDetails } from "../../utils/contract";
 import {
   DocumentDuplicateIcon,
   ChartBarIcon,
@@ -15,53 +14,27 @@ import { useSimpleMode } from "./Header";
 import ExtendedChartDropdown from "./ExtendedChartDropdown";
 import RoundTimer from "./RoundTimer";
 
-const REFRESH_INTERVAL = 5000;
+type RoundDetailsProps = {
+  roundDetails: {
+    currentRound: number;
+    tokenAddress: string | null;
+    tokenName: string;
+    tokenSymbol: string;
+    startTime: number;
+    endTime: number;
+    airdropAmount: number;
+    USDM: string;
+  };
+  loading: boolean;
+};
 
-const RoundDashboard = () => {
+const RoundDashboard = ({ roundDetails, loading }: RoundDetailsProps) => {
   const { isSimpleMode } = useSimpleMode();
-  const [roundDetails, setRoundDetails] = useState({
-    currentRound: 0,
-    tokenAddress: null,
-    tokenName: "",
-    tokenSymbol: "",
-    startTime: 0,
-    endTime: 0,
-    airdropAmount: 0,
-    USDM: "",
-  });
-  const [loading, setLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [progress, setProgress] = useState<number>(0);
 
   const skeletonBaseColor = "#2d3748";
   const skeletonHighlightColor = "#4a5568";
-
-  const fetchRoundInfo = async () => {
-    try {
-      const details = await getLatestRoundDetails();
-
-      setRoundDetails({
-        currentRound: details.latestRound,
-        tokenAddress: details.token,
-        tokenName: details.name,
-        tokenSymbol: details.symbol,
-        startTime: details.startTimestamp,
-        endTime: details.endTimestamp,
-        airdropAmount: details.airdropPerParticipantUSDM,
-        USDM: details.USDM,
-      });
-    } catch (error) {
-      console.error("Error fetching round info:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchRoundInfo();
-    const interval = setInterval(fetchRoundInfo, REFRESH_INTERVAL);
-    return () => clearInterval(interval);
-  }, []);
 
   // Timer effect: update only timeLeft and progress
   useEffect(() => {
@@ -108,11 +81,19 @@ const RoundDashboard = () => {
     return () => clearInterval(timerInterval);
   }, [roundDetails, loading]);
 
+  const handleCopyUSDM = () => {
+    const { USDM } = roundDetails;
+    if (USDM) {
+      navigator.clipboard.writeText(USDM);
+      toast.success("USDM address copied to clipboard!", { duration: 2000 });
+    }
+  };
+
   const handleCopy = () => {
     const { tokenAddress } = roundDetails;
     if (tokenAddress && tokenAddress !== ethers.ZeroAddress) {
       navigator.clipboard.writeText(tokenAddress);
-      toast.success("Address copied to clipboard!", { duration: 2000 });
+      toast.success("Token address copied to clipboard!", { duration: 2000 });
     }
   };
 
@@ -194,18 +175,24 @@ const RoundDashboard = () => {
             </div>
           ) : (
             <>
-              {!isSimpleMode && (
+              {!isSimpleMode && roundDetails.USDM && (
                 <>
-                  {!isSimpleMode && (
-                    <button
-                      onClick={handleCopy}
-                      className="ml-2 p-1 flex items-center hover:text-gray-300 transition-colors cursor-pointer"
-                      title="Copy address"
-                    >
-                      <span className="font-mono">{truncatedAddress}</span>
-                      <DocumentDuplicateIcon className="w-4 h-4 ml-1" />
-                    </button>
-                  )}
+                  <button
+                    onClick={handleCopyUSDM}
+                    className="ml-2 p-1 flex items-center hover:text-gray-300 transition-colors cursor-pointer"
+                    title="Copy USDM address"
+                  >
+                    <span className="font-medium">USDM</span>
+                    <DocumentDuplicateIcon className="w-4 h-4 ml-1" />
+                  </button>
+                  <button
+                    onClick={handleCopy}
+                    className="ml-2 p-1 flex items-center hover:text-gray-300 transition-colors cursor-pointer"
+                    title="Copy token address"
+                  >
+                    <span className="font-mono">{truncatedAddress}</span>
+                    <DocumentDuplicateIcon className="w-4 h-4 ml-1" />
+                  </button>
                 </>
               )}
 
