@@ -1,15 +1,21 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import Leaderboard from "./components/Leaderboard";
-import RoundDashboard from "./components/RoundDashboard";
-import PlayerDashboard from "./components/PlayerDashboard";
-import LiveUpdateIndicator from "./components/LiveUpdateIndicator";
+import React, { useState, useEffect, use } from "react";
+import Leaderboard from "../../components/Leaderboard";
+import RoundDashboard from "../../components/RoundDashboard";
+import PlayerDashboard from "../../components/PlayerDashboard";
 import { useAccount } from "wagmi";
-import { fetchLatestRoundPNL, getLatestRoundDetails } from "../utils/contract";
+import {
+  fetchLatestRoundPNL,
+  getLatestRoundDetails,
+} from "../../../utils/contract";
 
-const REFRESH_INTERVAL = 5000;
-
-export default function Home() {
+export default function Home({
+  params,
+}: {
+  params: Promise<{ roundNumber: number }>;
+}) {
+  const unwrappedParams = use(params);
+  const { roundNumber } = unwrappedParams;
   const { address } = useAccount();
   const [pnlData, setPnlData] = useState({
     latestRound: 0,
@@ -34,16 +40,17 @@ export default function Home() {
   });
   const [loading, setLoading] = useState(true);
   const [roundLoading, setRoundLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchRoundInfo = async () => {
     try {
       // Get player-specific details if connected, otherwise get general info
-      const details = await getLatestRoundDetails(address || undefined);
+      const details = await getLatestRoundDetails(
+        address || undefined,
+        roundNumber
+      );
 
       setRoundDetails({
-        currentRound: details.latestRound,
+        currentRound: roundNumber,
         tokenAddress: details.token,
         tokenName: details.name,
         tokenSymbol: details.symbol,
@@ -66,44 +73,47 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        if (!loading) {
-          setIsRefreshing(true);
-        }
-
-        const data = await fetchLatestRoundPNL();
+        const data = await fetchLatestRoundPNL(roundNumber);
         setPnlData(data);
-        setLastUpdated(new Date());
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
         setLoading(false);
-        setIsRefreshing(false);
       }
     };
 
     fetchData();
     fetchRoundInfo();
-
-    const dataIntervalId = setInterval(fetchData, REFRESH_INTERVAL);
-    const roundIntervalId = setInterval(fetchRoundInfo, REFRESH_INTERVAL);
-    
-    return () => {
-      clearInterval(dataIntervalId);
-      clearInterval(roundIntervalId);
-    };
   }, [loading]);
 
   return (
     <div className="container mx-auto">
+      <div className={`flex flex-wrap gap-2 mb-6 justify-center ${loading ? 'invisible' : ''}`}>
+        {[...Array(pnlData.latestRound + 1).keys()].map((num) => (
+          num == roundNumber ? (
+            <span
+              key={num}
+              className={
+                'px-3 py-1 rounded font-medium border transition-all duration-150 bg-blue-600 text-white border-blue-700 shadow-lg scale-105 cursor-default'
+              }
+              aria-current="page"
+            >
+              {num}
+            </span>
+          ) : (
+            <a
+              key={num}
+              href={`/round/${num}`}
+              className={
+                'px-3 py-1 rounded font-medium border transition-all duration-150 bg-gray-800 text-gray-200 border-gray-700 hover:bg-blue-700 hover:text-white'
+              }
+            >
+              {num}
+            </a>
+          )
+        ))}
+      </div>
       <RoundDashboard roundDetails={roundDetails} loading={roundLoading} />
-
-      {!loading && (
-        <PlayerDashboard 
-          roundDetails={roundDetails} 
-          pnlData={pnlData} 
-          loading={loading || roundLoading } 
-        />
-      )}
 
       <div className="max-w-4xl mx-auto">
         {loading ? (
@@ -140,12 +150,6 @@ export default function Home() {
               mmUnrealized={pnlData.mmUnrealized}
               me={address}
               currentRoundToken={roundDetails.tokenAddress}
-            />
-
-            <LiveUpdateIndicator
-              isRefreshing={isRefreshing}
-              lastUpdated={lastUpdated}
-              className="mt-4 px-2"
             />
           </>
         )}

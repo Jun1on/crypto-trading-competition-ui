@@ -11,7 +11,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
-import { useAccount, useDisconnect } from "wagmi";
+import { useAccount } from "wagmi";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import Cookies from "js-cookie";
 
@@ -111,6 +111,7 @@ const Header = () => {
 
   const moreNavItems = [
     { name: "Participation", href: "/participation" },
+    { name: "Past Rounds", href: "/round/0" },
     { name: "Learn", href: "/learn" },
   ];
 
@@ -218,7 +219,7 @@ const Header = () => {
             >
               <span
                 className={`flex items-center text-lg font-medium cursor-pointer ${
-                  pathname === "/participation" || pathname === "/learn"
+                  pathname === "/participation" || pathname === "/learn" || pathname.startsWith("/round/")
                     ? "text-orange-500"
                     : "text-gray-300 hover:text-white"
                 } transition-all duration-200`}
@@ -236,7 +237,6 @@ const Header = () => {
                 >
                   <div className="py-1">
                     {moreNavItems.map((item) => {
-                      const isActive = pathname === item.href;
                       return (
                         <Link
                           key={item.name}

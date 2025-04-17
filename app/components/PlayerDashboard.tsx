@@ -13,7 +13,6 @@ import { useSimpleMode } from "./Header";
 import Link from "next/link";
 import { pnlColor, formatNumber } from "../../utils/helpers";
 
-
 type PlayerDashboardProps = {
   roundDetails: {
     currentRound: number;
@@ -96,27 +95,32 @@ const PlayerDashboard = ({
 
       // Get trades count - prioritize userTrades from roundDetails if available
       let trades = 0;
-      
+
       // First check if we have userTrades from new API
       if (roundDetails.userTrades > 0) {
         trades = roundDetails.userTrades;
-      } 
+      }
 
       // Calculate ranking by creating a list of all PNLs (excluding 0 values) and finding position
       // First, combine each participant with their total PNL
       const combinedPNLs = pnlData.participants.map((_, i) => {
-        return (pnlData.realizedPNLs[i] || 0) + (pnlData.unrealizedPNLs[i] || 0);
+        return (
+          (pnlData.realizedPNLs[i] || 0) + (pnlData.unrealizedPNLs[i] || 0)
+        );
       });
 
       // Filter to only active participants (those with non-zero total PNL)
       const activePNLs = combinedPNLs.filter((pnl) => pnl !== 0);
       const activeParticipants = activePNLs.length;
-      
+
       // Sort active PNLs in descending order for rank calculation
       const sortedActivePNLs = [...activePNLs].sort((a, b) => b - a);
 
       // Calculate rank among active participants only
-      const rank = totalPNL === 0 ? "-" : (sortedActivePNLs.indexOf(totalPNL) + 1).toString();
+      const rank =
+        totalPNL === 0
+          ? "-"
+          : (sortedActivePNLs.indexOf(totalPNL) + 1).toString();
 
       setPlayerData({
         index,
@@ -166,8 +170,8 @@ const PlayerDashboard = ({
             ? playerData.nickname
             : "Your Dashboard"}
         </h2>
-        {!isSimpleMode && (
-          <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4">
+          {!isSimpleMode && (
             <a
               href={playerEtherscanUrl}
               target="_blank"
@@ -178,17 +182,17 @@ const PlayerDashboard = ({
               <span>Etherscan</span>
               <ArrowTopRightOnSquareIcon className="h-4 w-4" />
             </a>
-            <Link
-              href={`/player/${address}`}
-              target="_blank"
-              className="flex items-center gap-1 text-gray-300 hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-500 hover:text-transparent hover:bg-clip-text transition-all duration-150 ease-out transform hover:scale-105"
-              title="Player Card"
-            >
-              <span>Player Card</span>
-              <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-            </Link>
-          </div>
-        )}
+          )}
+          <Link
+            href={`/player/${address}`}
+            target="_blank"
+            className="flex items-center gap-1 text-gray-300 hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-500 hover:text-transparent hover:bg-clip-text transition-all duration-150 ease-out transform hover:scale-105"
+            title="Player Card"
+          >
+            <span>Player Card</span>
+            <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
 
       {!loading && !playerData.isRegistered && (
@@ -250,9 +254,7 @@ const PlayerDashboard = ({
                 <div>
                   <span className="text-gray-400">Unrealized </span>
                   <br />
-                  <span
-                    className={pnlColor(playerData.unrealizedPNL)}
-                  >
+                  <span className={pnlColor(playerData.unrealizedPNL)}>
                     {playerData.unrealizedPNL > 0 ? "+" : ""}
                     {formatNumber(playerData.unrealizedPNL)}
                   </span>

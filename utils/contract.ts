@@ -214,8 +214,12 @@ export async function fetchParticipationData() {
   }
 }
 
-export async function getLatestRoundDetails(address?: string) {
+export async function getLatestRoundDetails(address?: string, roundNumber?: number) {
   try {
+    if (roundNumber === undefined) {
+      roundNumber = ethers.MaxUint256;
+    }
+
     if (!peripheryContract) {
       return {
         USDM: "",
@@ -233,14 +237,11 @@ export async function getLatestRoundDetails(address?: string) {
     }
 
     const competitionAddress = process.env.NEXT_PUBLIC_competitionAddress || "";
-    // Use type(uint256).max for _round
-    const MAX_UINT256 = ethers.MaxUint256;
-    // Use provided address or zero address
     const participantAddress = address || "0x0000000000000000000000000000000000000000";
     
     const result = await peripheryContract.getRoundDetails(
       competitionAddress,
-      MAX_UINT256,
+      roundNumber,
       participantAddress
     );
 
@@ -273,8 +274,12 @@ export async function getLatestRoundDetails(address?: string) {
   }
 }
 
-export async function fetchLatestRoundPNL() {
+export async function fetchLatestRoundPNL(roundNumber?: number) {
   try {
+    if (roundNumber === undefined) {
+      roundNumber = ethers.MaxUint256;
+    }
+
     if (!peripheryContract) {
       return {
         latestRound: 0,
@@ -298,15 +303,14 @@ export async function fetchLatestRoundPNL() {
       };
     }
 
-    // Use type(uint256).max to fetch current-round PNL
-    const MAX_UINT256 = ethers.MaxUint256;
+    
     const [
       participants,
       realizedPNLs,
       unrealizedPNLs,
       mmRealized,
       mmUnrealized,
-    ] = await peripheryContract.getRoundPNLs(competitionAddress, MAX_UINT256);
+    ] = await peripheryContract.getRoundPNLs(competitionAddress, roundNumber);
     
     // Fetch current round number from competition contract
     const latestRoundBN = competitionContract
