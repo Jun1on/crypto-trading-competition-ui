@@ -5,7 +5,7 @@ import RoundDashboard from "./components/RoundDashboard";
 import PlayerDashboard from "./components/PlayerDashboard";
 import LiveUpdateIndicator from "./components/LiveUpdateIndicator";
 import { useAccount } from "wagmi";
-import { fetchLatestRoundPNL, getLatestRoundDetails, fetchParticipationData } from "../utils/contract";
+import { fetchLatestRoundPNL, getLatestRoundDetails } from "../utils/contract";
 
 const REFRESH_INTERVAL = 5000;
 
@@ -19,12 +19,6 @@ export default function Home() {
     mmRealized: 0,
     mmUnrealized: 0,
   });
-  const [participationData, setParticipationData] = useState({
-    latestRound: 0 as number | null,
-    participants: [] as string[],
-    participationScores: [] as number[],
-    trades: [] as number[],
-  });
   const [roundDetails, setRoundDetails] = useState({
     currentRound: 0,
     tokenAddress: null,
@@ -34,6 +28,9 @@ export default function Home() {
     endTime: 0,
     airdropAmount: 0,
     USDM: "",
+    usdmBalance: 0,
+    tokenBalance: 0,
+    userTrades: 0,
   });
   const [loading, setLoading] = useState(true);
   const [roundLoading, setRoundLoading] = useState(true);
@@ -43,7 +40,8 @@ export default function Home() {
 
   const fetchRoundInfo = async () => {
     try {
-      const details = await getLatestRoundDetails();
+      // Get player-specific details if connected, otherwise get general info
+      const details = await getLatestRoundDetails(address || undefined);
 
       setRoundDetails({
         currentRound: details.latestRound,
@@ -54,29 +52,15 @@ export default function Home() {
         endTime: details.endTimestamp,
         airdropAmount: details.airdropPerParticipantUSDM,
         USDM: details.USDM,
+        // Include the new fields from the enhanced API
+        usdmBalance: details.usdmBalance || 0,
+        tokenBalance: details.tokenBalance || 0,
+        userTrades: details.trades || 0,
       });
     } catch (error) {
       console.error("Error fetching round info:", error);
     } finally {
       setRoundLoading(false);
-    }
-  };
-
-  const fetchTradeData = async () => {
-    try {
-      const data = await fetchParticipationData();
-      
-      // Ensure we're setting all required properties with the correct types
-      setParticipationData({
-        latestRound: data.latestRound,
-        participants: Array.isArray(data.participants) ? data.participants : [],
-        participationScores: Array.isArray(data.participationScores) ? data.participationScores : [],
-        trades: Array.isArray(data.trades) ? data.trades : [],
-      });
-    } catch (error) {
-      console.error("Error fetching participation data:", error);
-    } finally {
-      setParticipationLoading(false);
     }
   };
 
@@ -100,16 +84,13 @@ export default function Home() {
 
     fetchData();
     fetchRoundInfo();
-    fetchTradeData();
 
     const dataIntervalId = setInterval(fetchData, REFRESH_INTERVAL);
     const roundIntervalId = setInterval(fetchRoundInfo, REFRESH_INTERVAL);
-    const tradeIntervalId = setInterval(fetchTradeData, REFRESH_INTERVAL);
     
     return () => {
       clearInterval(dataIntervalId);
       clearInterval(roundIntervalId);
-      clearInterval(tradeIntervalId);
     };
   }, [loading]);
 
@@ -121,8 +102,7 @@ export default function Home() {
         <PlayerDashboard 
           roundDetails={roundDetails} 
           pnlData={pnlData} 
-          participationData={participationData}
-          loading={loading || roundLoading || participationLoading} 
+          loading={loading || roundLoading } 
         />
       )}
 

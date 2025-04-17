@@ -781,7 +781,7 @@ const SwapPage = () => {
         path,
         accountAddress!,
         deadline,
-        { gasLimit: 200000 }
+        { gasLimit: 250000, maxPriorityFeePerGas: 2 }
       );
 
       const txHashShort = `${tx.hash.substring(0, 6)}...${tx.hash.substring(
