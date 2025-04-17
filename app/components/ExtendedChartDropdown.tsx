@@ -98,7 +98,7 @@ const ExtendedChartDropdown = ({ roundDetails, isPreStart, isSimpleMode }) => {
             rel="noopener noreferrer"
             className="block px-4 py-2 text-sm text-blue-400 hover:text-blue-300"
           >
-            Market Maker
+            AI Bot
           </a>
           <a
             href={`https://dexscreener.com/optimism/${roundDetails.tokenAddress}?maker=${process.env.NEXT_PUBLIC_DEV_WALLET}`}

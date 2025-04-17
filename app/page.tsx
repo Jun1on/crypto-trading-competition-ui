@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Leaderboard from "./components/Leaderboard";
-import RoundDashboard from "./components/RoundDashboard.tsx";
+import RoundDashboard from "./components/RoundDashboard";
 import PlayerDashboard from "./components/PlayerDashboard";
 import LiveUpdateIndicator from "./components/LiveUpdateIndicator";
 import { useAccount } from "wagmi";
@@ -160,6 +160,7 @@ export default function Home() {
               mmRealized={pnlData.mmRealized}
               mmUnrealized={pnlData.mmUnrealized}
               me={address}
+              currentRoundToken={roundDetails.tokenAddress}
             />
 
             <LiveUpdateIndicator

@@ -11,6 +11,7 @@ import Skeleton from "react-loading-skeleton";
 import erc20Abi from "../../abis/ERC20.json";
 import { getNickname } from "../../utils/contract";
 import { useSimpleMode } from "./Header";
+import Link from "next/link";
 
 type PlayerDashboardProps = {
   roundDetails: {
@@ -164,21 +165,23 @@ const PlayerDashboard = ({
       // Filter to only active participants (those with non-zero total PNL)
       const activePNLs = combinedPNLs.filter((pnl) => pnl !== 0);
       const activeParticipants = activePNLs.length;
-      console.log("ACTIVE", activeParticipants)
+      console.log("ACTIVE", activeParticipants);
 
       // Sort active PNLs in descending order for rank calculation
       const sortedActivePNLs = [...activePNLs].sort((a, b) => b - a);
 
-      console.log(sortedActivePNLs)
-      
+      console.log(sortedActivePNLs);
+
       // Calculate rank among active participants only
-      const rank = totalPNL === 0 ? "-" : sortedActivePNLs.indexOf(totalPNL) + 1;
+      const rank =
+        totalPNL === 0 ? "-" : sortedActivePNLs.indexOf(totalPNL) + 1;
 
       // Get number of trades
       const trades = participationData?.trades[index] || 0;
-      
+
       // Calculate total trades across all participants
-      const totalTrades = participationData?.trades.reduce((sum, count) => sum + count, 0) || 0;
+      const totalTrades =
+        participationData?.trades.reduce((sum, count) => sum + count, 0) || 0;
 
       // Get nickname
       const nickname = getNickname(index);
@@ -248,18 +251,27 @@ const PlayerDashboard = ({
             : "Your Dashboard"}
         </h2>
         {!isSimpleMode && (
-          <div className="flex items-center">
+          <div className="flex items-center gap-4">
             <a
               href={playerEtherscanUrl}
               target="_blank"
               rel="noopener noreferrer"
-            className="flex items-center gap-1 text-blue-400 hover:text-blue-300 text-gray-300 hover:text-gray-400"
-            title="View on Etherscan"
-          >
-            <span>Etherscan</span>
-            <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-          </a>
-        </div>
+              className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors duration-150 ease-in-out"
+              title="View on Etherscan"
+            >
+              <span>Etherscan</span>
+              <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+            </a>
+            <Link
+              href={`/player/${address}`}
+              target="_blank"
+              className="flex items-center gap-1 text-gray-300 hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-500 hover:text-transparent hover:bg-clip-text transition-all duration-150 ease-out transform hover:scale-105"
+              title="Player Card"
+            >
+              <span>Player Card</span>
+              <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+            </Link>
+          </div>
         )}
       </div>
 
@@ -297,7 +309,9 @@ const PlayerDashboard = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* PNL Stats */}
           <div className="bg-gray-700 bg-opacity-50 rounded-lg p-4">
-            <div className="text-gray-400 text-sm">{isSimpleMode ? "Profit 'n Loss (PNL)" : "PNL"}</div>
+            <div className="text-gray-400 text-sm">
+              {isSimpleMode ? "Profit 'n Loss (PNL)" : "PNL"}
+            </div>
             <div
               className={`text-2xl font-bold mt-1 ${getPNLColorClasses(
                 playerData.totalPNL
@@ -314,18 +328,21 @@ const PlayerDashboard = ({
 
                   <span className={getPNLColorClasses(playerData.realizedPNL)}>
                     {playerData.realizedPNL > 0 ? "+" : ""}
-                  {formatNumber(playerData.realizedPNL)}
-                </span>
+                    {formatNumber(playerData.realizedPNL)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-400">Unrealized </span>
+                  <br />
+                  <span
+                    className={getPNLColorClasses(playerData.unrealizedPNL)}
+                  >
+                    {playerData.unrealizedPNL > 0 ? "+" : ""}
+                    {formatNumber(playerData.unrealizedPNL)}
+                  </span>
+                </div>
               </div>
-              <div>
-                <span className="text-gray-400">Unrealized </span>
-                <br />
-                <span className={getPNLColorClasses(playerData.unrealizedPNL)}>
-                  {playerData.unrealizedPNL > 0 ? "+" : ""}
-                  {formatNumber(playerData.unrealizedPNL)}
-                </span>
-              </div>
-            </div>)}
+            )}
           </div>
 
           <div className="bg-gray-700 bg-opacity-50 rounded-lg p-4">
@@ -378,30 +395,32 @@ const PlayerDashboard = ({
           </div>
 
           <div className="bg-gray-700 bg-opacity-50 rounded-lg p-4">
-            <div className="text-gray-400 text-sm">Your Trades</div>
-            <div className="text-2xl font-bold mt-1 text-white flex items-center justify-between">
-              {isSimpleMode ? (
-                <span>
-                  {playerData.trades}
-                </span>
-              ) : (
+            {isSimpleMode ? (
+              <>
+                <div className="text-gray-400 text-sm">Your Trades</div>
+                <div className="text-2xl font-bold mt-1 text-white flex items-center justify-between">
+                  <span>{playerData.trades}</span>
+                </div>
+              </>
+            ) : (
+              <>
                 <a
                   href={playerTokenTxUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-white hover:text-gray-300"
+                  className="flex flex-col items-start text-white hover:text-gray-300"
                   title="View trades"
                 >
-                  <span>
-                    {playerData.trades}
-                    <span className="text-gray-400 text-sm ml-1">
-                      out of {playerData.totalTrades}
-                    </span>
-                  </span>
-                  <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                  <div className="flex items-center gap-1">
+                    <div className="text-gray-400 text-sm">Your Trades</div>
+                    <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                  </div>
+                  <div className="text-2xl font-bold mt-1 flex items-center gap-2">
+                    <span>{playerData.trades}</span>
+                  </div>
                 </a>
-              )}
-            </div>
+              </>
+            )}
           </div>
         </div>
       )}
