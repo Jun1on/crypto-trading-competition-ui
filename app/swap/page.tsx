@@ -291,7 +291,7 @@ const SwapPage = () => {
         tokenName: details.name,
         tokenSymbol: tokenSymbol,
         tokenDecimals: tokenDecimals,
-        startTime: details.startTimestamp + 1000,
+        startTime: details.startTimestamp,
         endTime: details.endTimestamp,
         airdropAmount: details.airdropPerParticipantUSDM,
         USDM: details.USDM,
@@ -768,7 +768,6 @@ const SwapPage = () => {
       );
       const amountIn = parseUnits(inputAmount, inputDec);
 
-      // --- Set amountOutMin directly to 0 ---
       const amountOutMin = BigInt(0);
 
       const path = [inputTokenAddr, outputTokenAddr];
@@ -778,10 +777,11 @@ const SwapPage = () => {
 
       const tx = await router.swapExactTokensForTokens(
         amountIn,
-        amountOutMin, // Pass 0 here
+        amountOutMin,
         path,
         accountAddress!,
-        deadline
+        deadline,
+        { gasLimit: 200000 }
       );
 
       const txHashShort = `${tx.hash.substring(0, 6)}...${tx.hash.substring(
@@ -1222,6 +1222,7 @@ const SwapPage = () => {
               ) : outputToken && isConnected ? (
                 <button
                   onClick={handleSwapDirectionAndMax}
+                  disabled={isDisabled}
                   className={`text-xs text-gray-400 hover:text-white disabled:opacity-50 ${
                     isDisabled ? "cursor-not-allowed" : "cursor-pointer"
                   }`}

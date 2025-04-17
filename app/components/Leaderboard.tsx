@@ -23,6 +23,7 @@ interface LeaderboardProps {
   mmRealized: number;
   mmUnrealized: number;
   me?: string;
+  currentRoundToken?: string;
 }
 
 const Leaderboard: React.FC<LeaderboardProps> = ({
@@ -32,6 +33,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   mmRealized = 0,
   mmUnrealized = 0,
   me,
+  currentRoundToken,
 }) => {
   // Get the current path
   const pathname = usePathname();
@@ -127,7 +129,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                           </span>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>PNL if player sold all their tokens now</p>
+                          <p>Profit if player sold all their tokens now</p>
                         </TooltipContent>
                       </Tooltip>
                     </th>
@@ -207,21 +209,47 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                             </TooltipContent>
                           </Tooltip>
                         ) : (
-                          <Link
-                            href={`/player/${entry.player}`}
-                            target="_blank"
-                          >
-                            <span
-                              className={`flex items-center hover:underline ${
-                                isMe
-                                  ? "text-orange-400 font-medium"
-                                  : "text-white"
-                              }`}
-                            >
-                              <span>{entry.nickname}</span>
-                              <ArrowTopRightOnSquareIcon className="w-4 h-4 ml-1 text-gray-400" />
-                            </span>
-                          </Link>
+                          <div className="flex items-center gap-2">
+                            {isSimpleMode ? (
+                              <span
+                                className={isMe ? "text-orange-400 font-medium" : "text-white"}
+                              >
+                                {entry.nickname}
+                              </span>
+                            ) : (
+                              <>
+                                <Link
+                                  href={`/player/${entry.player}`}
+                                  target="_blank"
+                                >
+                                  <span
+                                    className={`flex items-center hover:underline ${
+                                      isMe
+                                        ? "text-orange-400 font-medium"
+                                        : "text-white"
+                                    }`}
+                                  >
+                                    <span>{entry.nickname}</span>
+                                    <ArrowTopRightOnSquareIcon className="w-4 h-4 ml-1 text-gray-400" />
+                                  </span>
+                                </Link>
+                                
+                                {pathname !== "/leaderboard" && currentRoundToken && (
+                                  <Link
+                                    href={`https://dexscreener.com/optimism/${currentRoundToken}?maker=${entry.player}`}
+                                    target="_blank"
+                                    title="View on DexScreener"
+                                    className="text-blue-400 hover:text-blue-300 ml-1"
+                                  >
+                                    <span className="flex items-center text-xs">
+                                      <span>Trades</span>
+                                      <ArrowTopRightOnSquareIcon className="w-3 h-3 ml-1" />
+                                    </span>
+                                  </Link>
+                                )}
+                              </>
+                            )}
+                          </div>
                         )}
                       </div>
                     </TableCell>
