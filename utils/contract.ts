@@ -33,54 +33,6 @@ if (typeof window !== "undefined") {
   }
 }
 
-export async function getParticipants(): Promise<string[]> {
-  if (!competitionContract) return [];
-
-  const length = await competitionContract.participantsLength();
-  let promises = [];
-  for (let i = 0; i < length; i++) {
-    promises.push(competitionContract.participants(i));
-  }
-  return await Promise.all(promises);
-}
-
-export async function getPNL(player: string) {
-  if (!competitionContract) return { realizedPNL: 0, unrealizedPNL: 0 };
-
-  const [realizedPNL, unrealizedPNL] = await competitionContract.getPNL(player);
-
-  return {
-    realizedPNL: parseFloat(ethers.formatEther(realizedPNL)),
-    unrealizedPNL: parseFloat(ethers.formatEther(unrealizedPNL)),
-  };
-}
-
-export async function getCurrentRound(): Promise<number> {
-  if (!competitionContract) return 0;
-
-  return Number((await competitionContract.currentRound()).toString());
-}
-
-export async function getCurrentToken(): Promise<string> {
-  if (!competitionContract) return "";
-
-  return await competitionContract.currentToken();
-}
-
-export async function getPlayerPNLHistory(
-  player: string,
-  currentRound: number
-) {
-  if (!competitionContract) return [];
-
-  const history = [];
-  for (let i = 0; i < currentRound; i++) {
-    const pnl = await competitionContract.playerPNLHistory(player, i);
-    history.push(pnl);
-  }
-  return history;
-}
-
 export async function getNonce(player: string): Promise<number> {
   if (!provider) return 0;
 
@@ -169,28 +121,37 @@ export async function fetchPNLData() {
 
 export async function fetchParticipationData() {
   try {
-    if (!peripheryContract)
+    if (!peripheryContract) {
       return {
         latestRound: null,
         participants: [],
         participationScores: [],
         trades: [],
       };
+    }
 
     const competitionAddress = process.env.NEXT_PUBLIC_competitionAddress || "";
     if (!competitionAddress) {
-      return { participants: [], participationScores: [], trades: [] };
+      return {
+        latestRound: null,
+        participants: [],
+        participationScores: [],
+        trades: [],
+      };
     }
 
+    // getParticipation doesn't need _round parameter in the updated API
     const result = await peripheryContract.getParticipation(competitionAddress);
-
+    
     // Check if result is structured as expected
     if (!result || !Array.isArray(result) || result.length < 3) {
-      console.error(
-        "Unexpected response format from getParticipation:",
-        result
-      );
-      return { participants: [], participationScores: [], trades: [] };
+      console.error("Unexpected response format from getParticipation:", result);
+      return { 
+        latestRound: null,
+        participants: [], 
+        participationScores: [], 
+        trades: [] 
+      };
     }
 
     const [latestRound, participants, participationScores, trades] = result;
@@ -253,7 +214,7 @@ export async function fetchParticipationData() {
   }
 }
 
-export async function getLatestRoundDetails() {
+export async function getLatestRoundDetails(address?: string) {
   try {
     if (!peripheryContract) {
       return {
@@ -265,12 +226,22 @@ export async function getLatestRoundDetails() {
         startTimestamp: 0,
         endTimestamp: 0,
         airdropPerParticipantUSDM: 0,
+        usdmBalance: 0,
+        tokenBalance: 0,
+        trades: 0,
       };
     }
 
     const competitionAddress = process.env.NEXT_PUBLIC_competitionAddress || "";
-    const result = await peripheryContract.getLatestRoundDetails(
-      competitionAddress
+    // Use type(uint256).max for _round
+    const MAX_UINT256 = ethers.MaxUint256;
+    // Use provided address or zero address
+    const participantAddress = address || "0x0000000000000000000000000000000000000000";
+    
+    const result = await peripheryContract.getRoundDetails(
+      competitionAddress,
+      MAX_UINT256,
+      participantAddress
     );
 
     return {
@@ -282,6 +253,10 @@ export async function getLatestRoundDetails() {
       startTimestamp: Number(result[5]),
       endTimestamp: Number(result[6]),
       airdropPerParticipantUSDM: Number(ethers.formatEther(result[7])),
+      // New fields from the updated API (will be 0 since we're using ZERO_ADDRESS)
+      usdmBalance: Number(ethers.formatEther(result[8] || 0)),
+      tokenBalance: Number(ethers.formatEther(result[9] || 0)),
+      trades: Number(result[10] || 0),
     };
   } catch (error) {
     console.error("Error fetching round details:", error);
@@ -323,27 +298,34 @@ export async function fetchLatestRoundPNL() {
       };
     }
 
+    // Use type(uint256).max to fetch current-round PNL
+    const MAX_UINT256 = ethers.MaxUint256;
     const [
-      latestRound,
       participants,
       realizedPNLs,
       unrealizedPNLs,
       mmRealized,
       mmUnrealized,
-    ] = await peripheryContract.getLatestRoundPNL(competitionAddress);
+    ] = await peripheryContract.getRoundPNLs(competitionAddress, MAX_UINT256);
+    
+    // Fetch current round number from competition contract
+    const latestRoundBN = competitionContract
+      ? await competitionContract.currentRound()
+      : BigInt(0);
 
-    // Convert all BigInt values to regular numbers
-    const formattedRealizedPNLs = realizedPNLs.map((pnl: bigint) =>
-      Number(ethers.formatEther(pnl))
-    );
-
-    const formattedUnrealizedPNLs = unrealizedPNLs.map((pnl: bigint) =>
-      Number(ethers.formatEther(pnl))
-    );
+    // Convert BigInt arrays to number arrays
+    const formattedRealizedPNLs = Array.isArray(realizedPNLs)
+      ? (realizedPNLs as bigint[]).map((pnl) => Number(ethers.formatEther(pnl)))
+      : [];
+    const formattedUnrealizedPNLs = Array.isArray(unrealizedPNLs)
+      ? (unrealizedPNLs as bigint[]).map((pnl) => Number(ethers.formatEther(pnl)))
+      : [];
 
     return {
-      latestRound: Number(latestRound),
-      participants: participants.map((p: any) => p.toString()),
+      latestRound: Number(latestRoundBN.toString()),
+      participants: Array.isArray(participants)
+        ? participants.map((p: any) => p.toString())
+        : [],
       realizedPNLs: formattedRealizedPNLs,
       unrealizedPNLs: formattedUnrealizedPNLs,
       mmRealized: Number(ethers.formatEther(mmRealized)),

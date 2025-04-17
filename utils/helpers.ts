@@ -1,0 +1,13 @@
+export const pnlColor = (value: number) => {
+  if (value > 0) return "text-green-400";
+  if (value < 0) return "text-red-400";
+  return "text-gray-400";
+};
+
+export const formatNumber = (num: number, minimumFractionDigits: number = 0) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "decimal",
+      minimumFractionDigits,
+      maximumFractionDigits: 2,
+    }).format(num);
+  };

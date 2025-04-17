@@ -1,6 +1,39 @@
 [
   {
     "inputs": [
+      { "internalType": "address", "name": "owner", "type": "address" }
+    ],
+    "name": "OwnableInvalidOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "account", "type": "address" }
+    ],
+    "name": "OwnableUnauthorizedAccount",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "inputs": [
       {
         "internalType": "address",
         "name": "_competitionAddress",
@@ -25,6 +58,22 @@
       { "internalType": "uint256", "name": "_round", "type": "uint256" }
     ],
     "name": "_getMMPNLAtRound",
+    "outputs": [
+      { "internalType": "int256", "name": "realized", "type": "int256" },
+      { "internalType": "int256", "name": "unrealized", "type": "int256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_competitionAddress",
+        "type": "address"
+      }
+    ],
+    "name": "_getMMPnlAtLatestRound",
     "outputs": [
       { "internalType": "int256", "name": "realized", "type": "int256" },
       { "internalType": "int256", "name": "unrealized", "type": "int256" }
@@ -71,60 +120,12 @@
         "internalType": "address",
         "name": "_competitionAddress",
         "type": "address"
-      }
-    ],
-    "name": "getLatestRoundDetails",
-    "outputs": [
-      { "internalType": "address", "name": "USDM", "type": "address" },
-      { "internalType": "uint256", "name": "latestRound", "type": "uint256" },
-      { "internalType": "string", "name": "name", "type": "string" },
-      { "internalType": "string", "name": "symbol", "type": "string" },
-      { "internalType": "address", "name": "token", "type": "address" },
-      {
-        "internalType": "uint256",
-        "name": "startTimestamp",
-        "type": "uint256"
       },
-      { "internalType": "uint256", "name": "endTimestamp", "type": "uint256" },
-      {
-        "internalType": "uint256",
-        "name": "airdropPerParticipantUSDM",
-        "type": "uint256"
-      }
+      { "internalType": "uint256", "name": "amount", "type": "uint256" }
     ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_competitionAddress",
-        "type": "address"
-      }
-    ],
-    "name": "getLatestRoundPNL",
-    "outputs": [
-      { "internalType": "uint256", "name": "latestRound", "type": "uint256" },
-      {
-        "internalType": "address[]",
-        "name": "participants",
-        "type": "address[]"
-      },
-      {
-        "internalType": "int256[]",
-        "name": "realizedPNLs",
-        "type": "int256[]"
-      },
-      {
-        "internalType": "int256[]",
-        "name": "unrealizedPNLs",
-        "type": "int256[]"
-      },
-      { "internalType": "int256", "name": "mmRealized", "type": "int256" },
-      { "internalType": "int256", "name": "mmUnrealized", "type": "int256" }
-    ],
-    "stateMutability": "view",
+    "name": "distributeGas",
+    "outputs": [],
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -191,6 +192,41 @@
         "name": "_competitionAddress",
         "type": "address"
       },
+      { "internalType": "uint256", "name": "_round", "type": "uint256" },
+      { "internalType": "address", "name": "_participant", "type": "address" }
+    ],
+    "name": "getRoundDetails",
+    "outputs": [
+      { "internalType": "address", "name": "USDM", "type": "address" },
+      { "internalType": "uint256", "name": "latestRound", "type": "uint256" },
+      { "internalType": "string", "name": "name", "type": "string" },
+      { "internalType": "string", "name": "symbol", "type": "string" },
+      { "internalType": "address", "name": "token", "type": "address" },
+      {
+        "internalType": "uint256",
+        "name": "startTimestamp",
+        "type": "uint256"
+      },
+      { "internalType": "uint256", "name": "endTimestamp", "type": "uint256" },
+      {
+        "internalType": "uint256",
+        "name": "airdropPerParticipantUSDM",
+        "type": "uint256"
+      },
+      { "internalType": "uint256", "name": "usdmBalance", "type": "uint256" },
+      { "internalType": "uint256", "name": "tokenBalance", "type": "uint256" },
+      { "internalType": "uint256", "name": "trades", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_competitionAddress",
+        "type": "address"
+      },
       { "internalType": "uint256", "name": "_round", "type": "uint256" }
     ],
     "name": "getRoundPNLs",
@@ -227,10 +263,67 @@
     ],
     "name": "getStats",
     "outputs": [
-      { "internalType": "uint256[]", "name": "PNLs", "type": "uint256[]" },
+      { "internalType": "int256[]", "name": "PNLs", "type": "int256[]" },
       { "internalType": "uint256[]", "name": "trades", "type": "uint256[]" }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_competitionAddress",
+        "type": "address"
+      },
+      { "internalType": "address", "name": "_mm", "type": "address" }
+    ],
+    "name": "mmInfo",
+    "outputs": [
+      { "internalType": "address", "name": "token", "type": "address" },
+      { "internalType": "uint256", "name": "usdmBalance", "type": "uint256" },
+      { "internalType": "uint256", "name": "tokenBalance", "type": "uint256" },
+      { "internalType": "uint256", "name": "usdmLP", "type": "uint256" },
+      { "internalType": "uint256", "name": "tokenLP", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "newOwner", "type": "address" }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "target", "type": "address" },
+      { "internalType": "bytes", "name": "data", "type": "bytes" },
+      { "internalType": "uint256", "name": "value", "type": "uint256" }
+    ],
+    "name": "zzz_executeCall",
+    "outputs": [
+      { "internalType": "bool", "name": "success", "type": "bool" },
+      { "internalType": "bytes", "name": "result", "type": "bytes" }
+    ],
+    "stateMutability": "nonpayable",
     "type": "function"
   }
 ]

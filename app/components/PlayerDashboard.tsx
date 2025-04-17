@@ -8,10 +8,11 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import Skeleton from "react-loading-skeleton";
-import erc20Abi from "../../abis/ERC20.json";
 import { getNickname } from "../../utils/contract";
 import { useSimpleMode } from "./Header";
 import Link from "next/link";
+import { pnlColor, formatNumber } from "../../utils/helpers";
+
 
 type PlayerDashboardProps = {
   roundDetails: {
@@ -23,6 +24,9 @@ type PlayerDashboardProps = {
     endTime: number;
     airdropAmount: number;
     USDM: string;
+    usdmBalance: number;
+    tokenBalance: number;
+    userTrades: number;
   };
   pnlData: {
     latestRound: number;
@@ -32,36 +36,23 @@ type PlayerDashboardProps = {
     mmRealized: number;
     mmUnrealized: number;
   };
-  participationData?: {
-    latestRound: number | null;
-    participants: string[];
-    participationScores: number[];
-    trades: number[];
-  };
   loading: boolean;
 };
 
 const PlayerDashboard = ({
   roundDetails,
   pnlData,
-  participationData,
   loading,
 }: PlayerDashboardProps) => {
   const { isSimpleMode } = useSimpleMode();
   const { address } = useAccount();
-  const [balances, setBalances] = useState({
-    usdm: 0,
-    token: 0,
-    loading: true,
-  });
   const [playerData, setPlayerData] = useState({
     index: -1,
     realizedPNL: 0,
     unrealizedPNL: 0,
     totalPNL: 0,
     trades: 0,
-    totalTrades: 0,
-    rank: 0,
+    rank: "", // Change to string type to match the "-" value for unranked players
     nickname: "",
     isRegistered: false,
     activeParticipants: 0,
@@ -71,58 +62,6 @@ const PlayerDashboard = ({
   const skeletonHighlightColor = "#4a5568";
 
   useEffect(() => {
-    const getBalances = async () => {
-      if (!address || !roundDetails.USDM || !roundDetails.tokenAddress) {
-        setBalances({ usdm: 0, token: 0, loading: false });
-        return;
-      }
-
-      try {
-        // Use a provider from the window.ethereum object
-        const provider = new ethers.BrowserProvider(window.ethereum);
-
-        // Create multicall - fetch both token balances in parallel
-        const usdmContract = new ethers.Contract(
-          roundDetails.USDM,
-          erc20Abi,
-          provider
-        );
-
-        let tokenContract;
-        if (
-          roundDetails.tokenAddress &&
-          roundDetails.tokenAddress !== ethers.ZeroAddress
-        ) {
-          tokenContract = new ethers.Contract(
-            roundDetails.tokenAddress,
-            erc20Abi,
-            provider
-          );
-        }
-
-        // Fetch balances in parallel
-        const [usdmBalance, tokenBalance] = await Promise.all([
-          usdmContract.balanceOf(address),
-          tokenContract && roundDetails.tokenAddress !== ethers.ZeroAddress
-            ? tokenContract.balanceOf(address)
-            : Promise.resolve(0),
-        ]);
-
-        setBalances({
-          usdm: parseFloat(ethers.formatEther(usdmBalance)),
-          token: parseFloat(ethers.formatEther(tokenBalance)),
-          loading: false,
-        });
-      } catch (error) {
-        console.error("Error fetching balances:", error);
-        setBalances({
-          usdm: 0,
-          token: 0,
-          loading: false,
-        });
-      }
-    };
-
     // Get player index and data
     const calculatePlayerData = () => {
       if (!address || !pnlData.participants.length) return;
@@ -141,8 +80,7 @@ const PlayerDashboard = ({
           unrealizedPNL: 0,
           totalPNL: 0,
           trades: 0,
-          totalTrades: 0,
-          rank: 0,
+          rank: "", // Changed to string type to match the rank state type
           nickname: "",
           isRegistered: false,
           activeParticipants: 0,
@@ -154,37 +92,31 @@ const PlayerDashboard = ({
       const realizedPNL = pnlData.realizedPNLs[index] || 0;
       const unrealizedPNL = pnlData.unrealizedPNLs[index] || 0;
       const totalPNL = realizedPNL + unrealizedPNL;
+      const nickname = getNickname(index);
 
-      // Calculate player's rank based on total PNL
+      // Get trades count - prioritize userTrades from roundDetails if available
+      let trades = 0;
+      
+      // First check if we have userTrades from new API
+      if (roundDetails.userTrades > 0) {
+        trades = roundDetails.userTrades;
+      } 
+
+      // Calculate ranking by creating a list of all PNLs (excluding 0 values) and finding position
+      // First, combine each participant with their total PNL
       const combinedPNLs = pnlData.participants.map((_, i) => {
-        return (
-          (pnlData.realizedPNLs[i] || 0) + (pnlData.unrealizedPNLs[i] || 0)
-        );
+        return (pnlData.realizedPNLs[i] || 0) + (pnlData.unrealizedPNLs[i] || 0);
       });
 
       // Filter to only active participants (those with non-zero total PNL)
       const activePNLs = combinedPNLs.filter((pnl) => pnl !== 0);
       const activeParticipants = activePNLs.length;
-      console.log("ACTIVE", activeParticipants);
-
+      
       // Sort active PNLs in descending order for rank calculation
       const sortedActivePNLs = [...activePNLs].sort((a, b) => b - a);
 
-      console.log(sortedActivePNLs);
-
       // Calculate rank among active participants only
-      const rank =
-        totalPNL === 0 ? "-" : sortedActivePNLs.indexOf(totalPNL) + 1;
-
-      // Get number of trades
-      const trades = participationData?.trades[index] || 0;
-
-      // Calculate total trades across all participants
-      const totalTrades =
-        participationData?.trades.reduce((sum, count) => sum + count, 0) || 0;
-
-      // Get nickname
-      const nickname = getNickname(index);
+      const rank = totalPNL === 0 ? "-" : (sortedActivePNLs.indexOf(totalPNL) + 1).toString();
 
       setPlayerData({
         index,
@@ -192,7 +124,6 @@ const PlayerDashboard = ({
         unrealizedPNL,
         totalPNL,
         trades,
-        totalTrades,
         rank,
         nickname,
         isRegistered: true,
@@ -201,10 +132,9 @@ const PlayerDashboard = ({
     };
 
     if (!loading) {
-      getBalances();
       calculatePlayerData();
     }
-  }, [address, roundDetails, pnlData, participationData, loading]);
+  }, [address, loading, pnlData, roundDetails]);
 
   if (!address) {
     return (
@@ -215,20 +145,6 @@ const PlayerDashboard = ({
       </div>
     );
   }
-
-  const formatNumber = (num: number, minimumFractionDigits: number = 0) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "decimal",
-      minimumFractionDigits,
-      maximumFractionDigits: 2,
-    }).format(num);
-  };
-
-  const getPNLColorClasses = (value: number) => {
-    if (value > 0) return "text-green-400";
-    if (value < 0) return "text-red-400";
-    return "text-gray-400";
-  };
 
   const truncateAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -285,7 +201,7 @@ const PlayerDashboard = ({
         </div>
       )}
 
-      {loading || balances.loading ? (
+      {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="bg-gray-700 bg-opacity-50 rounded-lg p-4">
@@ -313,7 +229,7 @@ const PlayerDashboard = ({
               {isSimpleMode ? "Profit 'n Loss (PNL)" : "PNL"}
             </div>
             <div
-              className={`text-2xl font-bold mt-1 ${getPNLColorClasses(
+              className={`text-2xl font-bold mt-1 ${pnlColor(
                 playerData.totalPNL
               )}`}
             >
@@ -326,7 +242,7 @@ const PlayerDashboard = ({
                   <span className="text-gray-400">Realized </span>
                   <br />
 
-                  <span className={getPNLColorClasses(playerData.realizedPNL)}>
+                  <span className={pnlColor(playerData.realizedPNL)}>
                     {playerData.realizedPNL > 0 ? "+" : ""}
                     {formatNumber(playerData.realizedPNL)}
                   </span>
@@ -335,7 +251,7 @@ const PlayerDashboard = ({
                   <span className="text-gray-400">Unrealized </span>
                   <br />
                   <span
-                    className={getPNLColorClasses(playerData.unrealizedPNL)}
+                    className={pnlColor(playerData.unrealizedPNL)}
                   >
                     {playerData.unrealizedPNL > 0 ? "+" : ""}
                     {formatNumber(playerData.unrealizedPNL)}
@@ -348,18 +264,18 @@ const PlayerDashboard = ({
           <div className="bg-gray-700 bg-opacity-50 rounded-lg p-4">
             <div className="flex flex-col mt-1">
               <div className="flex justify-between">
-                <span className="text-gray-300">USDM:</span>
+                <span className="text-gray-300">USDM</span>
                 <span className="text-white font-medium">
-                  {formatNumber(balances.usdm)}
+                  {formatNumber(roundDetails.usdmBalance)}
                 </span>
               </div>
               {roundDetails.tokenSymbol && (
                 <div className="flex justify-between mt-1">
                   <span className="text-gray-300">
-                    {roundDetails.tokenSymbol}:
+                    {roundDetails.tokenSymbol}
                   </span>
                   <span className="text-white font-medium">
-                    {formatNumber(balances.token)}
+                    {formatNumber(roundDetails.tokenBalance)}
                   </span>
                 </div>
               )}
