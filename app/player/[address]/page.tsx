@@ -4,42 +4,26 @@ import React, { useEffect, useState, use } from "react";
 import type { ChartOptions } from "chart.js";
 import { ethers } from "ethers";
 import { useRouter } from "next/navigation";
-import { ArrowLeftIcon, ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
-import Skeleton from "react-loading-skeleton";
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import "react-loading-skeleton/dist/skeleton.css";
-import { Line } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-} from "chart.js";
-import { getNickname, getLatestRoundDetails, fetchPNLData } from "../../../utils/contract";
+import dynamic from "next/dynamic";
+
+const Line = dynamic(() => import("react-chartjs-2").then((mod) => mod.Line), {
+  ssr: false,
+});
+
+import { getNickname, fetchPNLData } from "../../../utils/contract";
 import { useSimpleMode } from "../../components/Header";
 import { pnlColor, formatNumber } from "../../../utils/helpers";
+import CardLoading from "./CardLoading";
 
-// Register ChartJS components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
-
-const PlayerDetails = ({ params }: { params: Promise<{ address: string }> }) => {
+const PlayerDetails = ({
+  params,
+}: {
+  params: Promise<{ address: string }>;
+}) => {
   const unwrappedParams = use(params);
   const { address } = unwrappedParams;
-  const router = useRouter();
   const { isSimpleMode } = useSimpleMode();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,23 +35,46 @@ const PlayerDetails = ({ params }: { params: Promise<{ address: string }> }) => 
     totalPlayers: number;
     activePlayers: number;
     totalPNL: number;
-  }>({ 
-    pnls: [], 
-    trades: [], 
-    nickname: "", 
+  }>({
+    pnls: [],
+    trades: [],
+    nickname: "",
     rank: "-",
     totalPlayers: 0,
     activePlayers: 0,
-    totalPNL: 0
+    totalPNL: 0,
   });
-  const [roundDetails, setRoundDetails] = useState<{
-    tokenSymbol: string;
-    tokenAddress: string;
-    latestRound: number;
-  }>({ tokenSymbol: "", tokenAddress: "", latestRound: 0 });
 
-  const skeletonBaseColor = "#2d3748";
-  const skeletonHighlightColor = "#4a5568";
+  // Register Chart.js components on the client side only
+  useEffect(() => {
+    // Import and register Chart.js components
+    const registerChartComponents = async () => {
+      const {
+        Chart,
+        CategoryScale,
+        LinearScale,
+        PointElement,
+        LineElement,
+        Title,
+        Tooltip,
+        Legend,
+        Filler,
+      } = await import("chart.js");
+
+      Chart.register(
+        CategoryScale,
+        LinearScale,
+        PointElement,
+        LineElement,
+        Title,
+        Tooltip,
+        Legend,
+        Filler
+      );
+    };
+
+    registerChartComponents();
+  }, []);
 
   useEffect(() => {
     const fetchPlayerData = async () => {
@@ -77,15 +84,18 @@ const PlayerDetails = ({ params }: { params: Promise<{ address: string }> }) => 
 
         const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || "";
         if (!rpcUrl) throw new Error("RPC URL not defined");
-        
+
         const provider = new ethers.JsonRpcProvider(rpcUrl);
         const peripheryAddress = process.env.NEXT_PUBLIC_peripheryAddress || "";
-        const competitionAddress = process.env.NEXT_PUBLIC_competitionAddress || "";
-        
-        if (!peripheryAddress) throw new Error("Periphery address not defined");
-        if (!competitionAddress) throw new Error("Competition address not defined");
+        const competitionAddress =
+          process.env.NEXT_PUBLIC_competitionAddress || "";
 
-        const PeripheryABI = (await import("../../../abis/Periphery.json")).default;
+        if (!peripheryAddress) throw new Error("Periphery address not defined");
+        if (!competitionAddress)
+          throw new Error("Competition address not defined");
+
+        const PeripheryABI = (await import("../../../abis/Periphery.json"))
+          .default;
 
         const peripheryContract = new ethers.Contract(
           peripheryAddress,
@@ -93,33 +103,31 @@ const PlayerDetails = ({ params }: { params: Promise<{ address: string }> }) => 
           provider
         );
 
-        const details = await getLatestRoundDetails(address);
-        setRoundDetails({
-          tokenSymbol: details.symbol,
-          tokenAddress: details.token,
-          latestRound: details.latestRound
-        });
-
         // Get player stats
-        const [pnls, trades] = await peripheryContract.getStats(competitionAddress, address);
-        
+        const [pnls, trades] = await peripheryContract.getStats(
+          competitionAddress,
+          address
+        );
+
         // Format PNLs and trades from contract (convert from BigInt to number with proper formatting)
-        const formattedPNLs = pnls.map((pnl: bigint) => Number(ethers.formatEther(pnl)));
+        const formattedPNLs = pnls.map((pnl: bigint) =>
+          Number(ethers.formatEther(pnl))
+        );
         const formattedTrades = trades.map((trade: bigint) => Number(trade));
 
         // Get all-time PNL data for ranking and nickname
-        const {
-          participants,
-          realizedPNLs,
-          unrealizedPNLs
-        } = await fetchPNLData();
+        const { participants, realizedPNLs, unrealizedPNLs } =
+          await fetchPNLData();
 
         const participantIndex = participants.findIndex(
           (participant) => participant.toLowerCase() === address.toLowerCase()
         );
 
         // Get player nickname
-        const nickname = participantIndex >= 0 ? getNickname(participantIndex) : "Unknown Player";
+        const nickname =
+          participantIndex >= 0
+            ? getNickname(participantIndex)
+            : "Unknown Player";
 
         // Calculate player's total PNL (realized + unrealized)
         let totalPNL = 0;
@@ -134,16 +142,19 @@ const PlayerDetails = ({ params }: { params: Promise<{ address: string }> }) => 
         const combinedPNLs = participants.map((_, i) => {
           return (realizedPNLs[i] || 0) + (unrealizedPNLs[i] || 0);
         });
-        
+
         // Filter to only active participants (those with non-zero total PNL)
         const activePNLs = combinedPNLs.filter((pnl) => pnl !== 0);
         const activeParticipants = activePNLs.length;
-        
+
         // Sort active PNLs in descending order for rank calculation
         const sortedActivePNLs = [...activePNLs].sort((a, b) => b - a);
 
         // Calculate rank among active participants only
-        const rank = totalPNL === 0 ? "-" : (sortedActivePNLs.indexOf(totalPNL) + 1).toString();
+        const rank =
+          totalPNL === 0
+            ? "-"
+            : (sortedActivePNLs.indexOf(totalPNL) + 1).toString();
 
         setPlayerStats({
           pnls: formattedPNLs,
@@ -152,9 +163,8 @@ const PlayerDetails = ({ params }: { params: Promise<{ address: string }> }) => 
           rank: rank,
           totalPlayers: participants.length,
           activePlayers: activeParticipants,
-          totalPNL: totalPNL
+          totalPNL: totalPNL,
         });
-
       } catch (error) {
         console.error("Error fetching player data:", error);
         setError(error.message);
@@ -176,8 +186,10 @@ const PlayerDetails = ({ params }: { params: Promise<{ address: string }> }) => 
   }, []);
 
   // Determine chart colors based on total PNL
-  const lineColor = playerStats.totalPNL >= 0 ? "rgba(34,197,94,1)" : "rgba(239,68,68,1)";
-  const fillColor = playerStats.totalPNL >= 0 ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)";
+  const lineColor =
+    playerStats.totalPNL >= 0 ? "rgba(34,197,94,1)" : "rgba(239,68,68,1)";
+  const fillColor =
+    playerStats.totalPNL >= 0 ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)";
 
   const chartData = {
     labels: playerStats.pnls.map((_, index) => `Round ${index}`),
@@ -186,7 +198,25 @@ const PlayerDetails = ({ params }: { params: Promise<{ address: string }> }) => 
         label: "Cumulative PNL",
         data: cumulativePNLs,
         fill: true,
-        backgroundColor: fillColor,
+        backgroundColor: (context: any) => {
+          const chart = context.chart;
+          const { ctx, chartArea } = chart;
+          if (!chartArea) return fillColor; // fallback for initial render
+          const gradient = ctx.createLinearGradient(
+            0,
+            chartArea.top,
+            0,
+            chartArea.bottom
+          );
+          if (playerStats.totalPNL >= 0) {
+            gradient.addColorStop(0, "rgba(34,197,94,0.5)"); // green top
+            gradient.addColorStop(1, "rgba(34,197,94,0)"); // transparent green bottom
+          } else {
+            gradient.addColorStop(1, "rgba(239,68,68,0.5)"); // red top
+            gradient.addColorStop(0, "rgba(239,68,68,0)"); // transparent red bottom
+          }
+          return gradient;
+        },
         borderColor: lineColor,
         borderWidth: 3,
         pointRadius: 0,
@@ -196,12 +226,12 @@ const PlayerDetails = ({ params }: { params: Promise<{ address: string }> }) => 
         pointBorderColor: "#fff",
         pointHoverBackgroundColor: "#fff",
         pointHoverBorderColor: lineColor,
-        tension: 0.1
+        tension: 0.1,
       },
     ],
   };
 
-  const chartOptions: ChartOptions<'line'> = {
+  const chartOptions: ChartOptions<"line"> = {
     responsive: true,
     plugins: {
       legend: {
@@ -209,49 +239,52 @@ const PlayerDetails = ({ params }: { params: Promise<{ address: string }> }) => 
       },
       tooltip: {
         displayColors: false,
-        backgroundColor: 'rgba(31, 41, 55, 0.9)',
+        backgroundColor: "rgba(31, 41, 55, 0.9)",
         padding: 8,
         cornerRadius: 6,
         callbacks: {
-          label: function(context: any) {
+          label: function (context: any) {
             return formatNumber(context.parsed.y);
-          }
-        }
-      }
+          },
+        },
+      },
     },
     interaction: {
-      mode: 'nearest' as const,
-      axis: 'x' as const,
-      intersect: true
+      mode: "nearest" as const,
+      axis: "x" as const,
+      intersect: true,
     },
     scales: {
       y: {
         ticks: {
-          display: false
+          display: false,
         },
         grid: {
-          display: false
+          display: false,
         },
         border: {
-          display: false
+          display: false,
         },
       },
       x: {
         ticks: {
-          display: false
+          display: false,
         },
         grid: {
-          display: false
+          display: false,
         },
         border: {
-          display: false
+          display: false,
         },
       },
     },
   };
 
   // Calculate statistics
-  const totalTrades = playerStats.trades.reduce((sum, trades) => sum + trades, 0);
+  const totalTrades = playerStats.trades.reduce(
+    (sum, trades) => sum + trades,
+    0
+  );
 
   const etherscanUrl = `${process.env.NEXT_PUBLIC_BLOCK_EXPLORER_URL}/address/${address}`;
 
@@ -259,63 +292,12 @@ const PlayerDetails = ({ params }: { params: Promise<{ address: string }> }) => 
 
   return (
     <div className="container mx-auto p-4 text-white">
-
       {error ? (
         <div className="bg-red-900 bg-opacity-50 p-4 rounded-lg mb-6">
           <p className="text-white">{error}</p>
         </div>
       ) : loading ? (
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-950 rounded-2xl shadow-xl overflow-hidden">
-            <div className="p-6 pb-0">
-              <div className="flex justify-between items-baseline">
-                <div>
-                  <Skeleton 
-                    width={150}
-                    height={28}
-                    baseColor={skeletonBaseColor} 
-                    highlightColor={skeletonHighlightColor} 
-                  />
-                </div>
-                <div>
-                  <Skeleton 
-                    width={100}
-                    height={32}
-                    baseColor={skeletonBaseColor} 
-                    highlightColor={skeletonHighlightColor} 
-                  />
-                </div>
-              </div>
-              
-              <div className="flex justify-between mt-2">
-                <Skeleton 
-                  width={120}
-                  height={20}
-                  baseColor={skeletonBaseColor} 
-                  highlightColor={skeletonHighlightColor} 
-                />
-                <Skeleton 
-                  width={80}
-                  height={20}
-                  baseColor={skeletonBaseColor} 
-                  highlightColor={skeletonHighlightColor} 
-                />
-              </div>
-            </div>
-            
-            {/* Chart skeleton */}
-            <div className="p-4">
-              <div className="h-80 flex items-center justify-center">
-                <Skeleton 
-                  width="100%"
-                  height="100%"
-                  baseColor={skeletonBaseColor} 
-                  highlightColor={skeletonHighlightColor} 
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        <CardLoading />
       ) : (
         <div className="max-w-2xl mx-auto">
           {/* Sleek Player Card - Robinhood Style */}
@@ -324,39 +306,50 @@ const PlayerDetails = ({ params }: { params: Promise<{ address: string }> }) => 
             <div className="p-6 pb-0">
               <div className="flex justify-between items-baseline">
                 <div>
-                  <h1 className="text-2xl font-bold text-white">{playerStats.nickname}</h1>
+                  <h1 className="text-2xl font-bold text-white">
+                    {playerStats.nickname}
+                  </h1>
                 </div>
-                
+
                 <div className="flex items-baseline">
-                  <span className={`text-3xl font-bold ${pnlColor(playerStats.totalPNL)}`}>
+                  <span
+                    className={`text-3xl font-bold ${pnlColor(
+                      playerStats.totalPNL
+                    )}`}
+                  >
                     {playerStats.totalPNL > 0 ? "+$" : "-$"}
                     {formatNumber(Math.abs(playerStats.totalPNL))}
                   </span>
                 </div>
               </div>
-              
+
               <div className="flex justify-between mt-2 text-sm text-gray-400">
                 <div>
-                  {playerStats.rank !== "-" && 
-                    <span>Rank #{playerStats.rank} of {playerStats.activePlayers}</span>
-                  }
+                  {playerStats.rank !== "-" && (
+                    <span>
+                      Rank #{playerStats.rank} of {playerStats.activePlayers}
+                    </span>
+                  )}
                   {playerStats.rank === "-" && <span>Unranked</span>}
                 </div>
                 <div className="flex items-center gap-1">
                   {!isSimpleMode && etherscanUrl && (
-                    <a href={etherscanUrl} target="_blank" rel="noopener noreferrer" 
-                       className="flex items-center gap-1 hover:text-blue-300 transition">
+                    <a
+                      href={etherscanUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 hover:text-blue-300 transition"
+                    >
                       {totalTrades} trades
                       <ArrowTopRightOnSquareIcon className="h-3 w-3" />
                     </a>
                   )}
-                  {isSimpleMode && (
-                    <span>{totalTrades} trades</span>
-                  )}
+                  {isSimpleMode && <span>{totalTrades} trades</span>}
                 </div>
               </div>
             </div>
-            
+
+            {/* Prominent Chart Section */}
             <div className="p-4">
               <div className="h-80">
                 {playerStats.pnls.length > 0 ? (
