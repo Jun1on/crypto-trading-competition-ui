@@ -8,12 +8,12 @@ let provider: ethers.JsonRpcProvider | null = null;
 let competitionContract: ethers.Contract | null = null;
 let peripheryContract: ethers.Contract | null = null;
 
+const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
+const competitionAddress = process.env.NEXT_PUBLIC_competitionAddress;
+const peripheryAddress = process.env.NEXT_PUBLIC_peripheryAddress;
+
 // Only run in browser environment
 if (typeof window !== "undefined") {
-  const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || "";
-  const competitionAddress = process.env.NEXT_PUBLIC_competitionAddress || "";
-  const peripheryAddress = process.env.NEXT_PUBLIC_peripheryAddress || "";
-
   if (rpcUrl && competitionAddress && peripheryAddress) {
     try {
       provider = new ethers.JsonRpcProvider(rpcUrl);
@@ -39,17 +39,14 @@ export async function getNonce(player: string): Promise<number> {
   return await provider.getTransactionCount(player);
 }
 
-export async function getTokenInfo(
-  tokenAddress: string
-): Promise<[string, string]> {
-  if (!provider) return ["", ""];
-
-  const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, provider);
-  const [name, symbol] = await Promise.all([
-    tokenContract.name(),
-    tokenContract.symbol(),
-  ]);
-  return [name, symbol];
+export async function getStats(competitionAddress: string, playerAddress: string): Promise<{ pnls: number[]; trades: number[] }> {
+  const [pnls, trades] = await peripheryContract.getStats(
+    competitionAddress,
+    playerAddress
+  );
+  const formattedPNLs = pnls.map((pnl: bigint) => Number(ethers.formatEther(pnl)));
+  const formattedTrades = trades.map((trade: bigint) => Number(trade));
+  return { pnls: formattedPNLs, trades: formattedTrades };
 }
 
 export function getNickname(index: number): string {
@@ -70,17 +67,6 @@ export async function fetchPNLData() {
         mmRealized: 0,
         mmUnrealized: 0,
       };
-
-    const competitionAddress = process.env.NEXT_PUBLIC_competitionAddress || "";
-    if (!competitionAddress) {
-      return {
-        participants: [],
-        realizedPNLs: [],
-        unrealizedPNLs: [],
-        mmRealized: 0,
-        mmUnrealized: 0,
-      };
-    }
 
     const [
       participants,
@@ -122,16 +108,6 @@ export async function fetchPNLData() {
 export async function fetchParticipationData() {
   try {
     if (!peripheryContract) {
-      return {
-        latestRound: null,
-        participants: [],
-        participationScores: [],
-        trades: [],
-      };
-    }
-
-    const competitionAddress = process.env.NEXT_PUBLIC_competitionAddress || "";
-    if (!competitionAddress) {
       return {
         latestRound: null,
         participants: [],
@@ -254,10 +230,9 @@ export async function getLatestRoundDetails(address?: string, roundNumber?: numb
       startTimestamp: Number(result[5]),
       endTimestamp: Number(result[6]),
       airdropPerParticipantUSDM: Number(ethers.formatEther(result[7])),
-      // New fields from the updated API (will be 0 since we're using ZERO_ADDRESS)
-      usdmBalance: Number(ethers.formatEther(result[8] || 0)),
-      tokenBalance: Number(ethers.formatEther(result[9] || 0)),
-      trades: Number(result[10] || 0),
+      usdmBalance: Number(ethers.formatEther(result[8])),
+      tokenBalance: Number(ethers.formatEther(result[9])),
+      trades: Number(result[10]),
     };
   } catch (error) {
     console.error("Error fetching round details:", error);
@@ -291,19 +266,6 @@ export async function fetchLatestRoundPNL(roundNumber?: number) {
       };
     }
 
-    const competitionAddress = process.env.NEXT_PUBLIC_competitionAddress || "";
-    if (!competitionAddress) {
-      return {
-        latestRound: 0,
-        participants: [],
-        realizedPNLs: [],
-        unrealizedPNLs: [],
-        mmRealized: 0,
-        mmUnrealized: 0,
-      };
-    }
-
-    
     const [
       participants,
       realizedPNLs,

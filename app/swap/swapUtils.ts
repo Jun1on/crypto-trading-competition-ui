@@ -17,7 +17,6 @@ export const MULTICALL_ABI = [
   "function aggregate3(tuple(address target, bool allowFailure, bytes callData)[] calls) public view returns (tuple(bool success, bytes returnData)[])"
 ];
 
-// --- RPC Cycling Utility ---
 const RPC_LIST = [
   "https://mainnet.optimism.io",
   "https://optimism-mainnet.public.blastapi.io",
