@@ -85,7 +85,7 @@ const RoundDashboard = ({ roundDetails, loading }: RoundDetailsProps) => {
     const { USDM } = roundDetails;
     if (USDM) {
       navigator.clipboard.writeText(USDM);
-      toast.success("USDM address copied to clipboard!", { duration: 2000 });
+      toast("USDM address copied", { duration: 2000 });
     }
   };
 
@@ -93,7 +93,7 @@ const RoundDashboard = ({ roundDetails, loading }: RoundDetailsProps) => {
     const { tokenAddress } = roundDetails;
     if (tokenAddress && tokenAddress !== ethers.ZeroAddress) {
       navigator.clipboard.writeText(tokenAddress);
-      toast.success("Token address copied to clipboard!", { duration: 2000 });
+      toast("Token address copied", { duration: 2000 });
     }
   };
 
