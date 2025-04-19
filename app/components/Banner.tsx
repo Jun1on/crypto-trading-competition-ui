@@ -62,7 +62,7 @@ export default function Banner({ address }) {
               onClick={handleDone}
               className="bg-white text-indigo-700 px-3 py-1 rounded text-sm font-medium transition-colors cursor-pointer hover:bg-indigo-100 flex-shrink-0"
             >
-              I'm ready!
+              I&apos;m ready!
             </button>
           </span>
         ) : (
