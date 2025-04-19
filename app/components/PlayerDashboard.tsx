@@ -12,6 +12,11 @@ import { getNickname } from "../../utils/contract";
 import { useSimpleMode } from "./Header";
 import Link from "next/link";
 import { pnlColor, formatNumber } from "../../utils/helpers";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type PlayerDashboardProps = {
   roundDetails: {
@@ -243,7 +248,14 @@ const PlayerDashboard = ({
             {!isSimpleMode && (
               <div className="flex justify-between mt-2 text-xs">
                 <div>
-                  <span className="text-gray-400">Realized </span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-gray-400">Realized</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>PNL from USDM balance</p>
+                    </TooltipContent>
+                  </Tooltip>
                   <br />
 
                   <span className={pnlColor(playerData.realizedPNL)}>
@@ -252,7 +264,14 @@ const PlayerDashboard = ({
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-400">Unrealized </span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-gray-400">Unrealized</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Profit if you sold all your tokens now</p>
+                    </TooltipContent>
+                  </Tooltip>
                   <br />
                   <span className={pnlColor(playerData.unrealizedPNL)}>
                     {playerData.unrealizedPNL > 0 ? "+" : ""}

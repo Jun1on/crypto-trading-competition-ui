@@ -4,10 +4,19 @@ export const pnlColor = (value: number) => {
   return "text-gray-400";
 };
 
-export const formatNumber = (num: number, minimumFractionDigits: number = 0) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "decimal",
-      minimumFractionDigits,
-      maximumFractionDigits: 2,
-    }).format(num);
-  };
+export const formatNumber = (
+  num: number,
+  minimumFractionDigits: number = 0
+) => {
+  return new Intl.NumberFormat("en-US", {
+    style: "decimal",
+    minimumFractionDigits,
+    maximumFractionDigits: 2,
+  }).format(num);
+};
+
+export const truncateAddress = (address: string) => {
+  return `${address.substring(0, 6)}...${address.substring(
+    address.length - 4
+  )}`;
+};
