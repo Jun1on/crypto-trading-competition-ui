@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import Link from "next/link";
-import { getNickname } from "../../utils/contract";
+import { getPerson } from "../../utils/contract";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 
 interface ParticipationGridProps {
@@ -43,11 +43,11 @@ const ParticipationGrid: React.FC<ParticipationGridProps> = ({
   const participationData = participants.map((player, index) => {
     const score = participationScores[index];
     const tradeCount = trades[index];
-    const nickname = getNickname(index);
+    const person = getPerson(index);
 
     return {
       player,
-      nickname,
+      person,
       score,
       tradeCount,
     };
@@ -55,7 +55,7 @@ const ParticipationGrid: React.FC<ParticipationGridProps> = ({
 
   // Sort the participation data alphabetically by nickname (ignoring case)
   const sortedParticipationData = [...participationData].sort((a, b) =>
-    a.nickname.toLowerCase().localeCompare(b.nickname.toLowerCase())
+    a.person[1].toLowerCase().localeCompare(b.person[1].toLowerCase())
   );
 
   return (
@@ -77,17 +77,19 @@ const ParticipationGrid: React.FC<ParticipationGridProps> = ({
             >
               <div className="flex flex-col">
                 <div className="flex items-start justify-between">
-                  <h3
-                    className={`font-medium truncate max-w-[80%] ${
-                      isMe ? "text-orange-400" : "text-white"
-                    }`}
-                    title={entry.nickname}
-                  >
-                    {entry.nickname}
-                  </h3>
+                  <div className="flex flex-col items-start">
+                    <h3
+                      className={`font-medium truncate max-w-[80%] ${
+                        isMe ? "text-orange-400" : "text-white"
+                      }`}
+                    >
+                      {entry.person[0]}
+                    </h3>
+                    <h2 className="text-gray-400 text-xs">{entry.person[1]}</h2>
+                    <h2 className="text-gray-400 text-xs">{entry.person[2]}</h2>
+                  </div>
                   <ArrowTopRightOnSquareIcon className="w-4 h-4 text-gray-400 flex-shrink-0 ml-2" />
                 </div>
-
                 <div className="mt-1 text-xs text-gray-400">
                   {entry.tradeCount}{" "}
                   {entry.tradeCount === 1 ? "trade" : "trades"}

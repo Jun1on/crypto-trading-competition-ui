@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import Link from "next/link";
-import { getNickname } from "../../utils/contract";
+import { getPerson } from "../../utils/contract";
 import { Table, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { usePathname } from "next/navigation";
 import {
@@ -53,11 +53,11 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       const realizedPNL = realizedPNLs[index];
       const unrealizedPNL = unrealizedPNLs[index];
       const totalPNL = realizedPNL + unrealizedPNL;
-      const nickname = getNickname(index);
+      const person = getPerson(index);
 
       return {
         player,
-        nickname,
+        person,
         realizedPNL,
         unrealizedPNL,
         totalPNL,
@@ -69,7 +69,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   // Create market maker entry
   const marketMakerEntry = {
     player: "market-maker",
-    nickname: "Market Maker",
+    person: ["Market Maker"],
     realizedPNL: mmRealized,
     unrealizedPNL: mmUnrealized,
     totalPNL: mmRealized + mmUnrealized,
@@ -186,7 +186,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <span className="flex items-center text-blue-400 font-medium cursor-help">
-                                {entry.nickname}
+                                {entry.person[0]}
                                 <InformationCircleIcon className="w-4 h-4 ml-1 text-blue-400" />
                               </span>
                             </TooltipTrigger>
@@ -218,7 +218,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                                     : "text-white"
                                 }
                               >
-                                {entry.nickname}
+                                {entry.person[0]}
                               </span>
                             ) : (
                               <>
@@ -233,7 +233,21 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                                         : "text-white"
                                     }`}
                                   >
-                                    <span>{entry.nickname}</span>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span>{entry.person[0]}</span>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>
+                                          {entry.person[2] ==
+                                          process.env.NEXT_PUBLIC_DEFAULT_SCHOOL
+                                            ? entry.person[1]
+                                            : entry.person[1] +
+                                              ", " +
+                                              entry.person[2]}
+                                        </p>
+                                      </TooltipContent>
+                                    </Tooltip>
                                     <ArrowTopRightOnSquareIcon className="w-4 h-4 ml-1 text-gray-400" />
                                   </span>
                                 </Link>
