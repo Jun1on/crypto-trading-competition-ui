@@ -8,7 +8,7 @@ import {
   PointElement,
   LineElement,
   Title,
-  Tooltip,
+  Tooltip as ChartTooltip,
   Legend,
   Filler,
   ChartOptions,
@@ -16,9 +16,16 @@ import {
 import dynamic from "next/dynamic";
 
 import { useSimpleMode } from "../../components/Header";
-import { getNickname, fetchPNLData } from "../../../utils/contract";
+import { getPerson, fetchPNLData } from "../../../utils/contract";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { formatNumber, pnlColor } from "../../../utils/helpers";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 
 if (typeof window !== "undefined") {
   ChartJS.register(
@@ -27,7 +34,7 @@ if (typeof window !== "undefined") {
     PointElement,
     LineElement,
     Title,
-    Tooltip,
+    ChartTooltip,
     Legend,
     Filler
   );
@@ -44,7 +51,7 @@ const PlayerDetails = ({ address }: { address: string }) => {
   const [playerStats, setPlayerStats] = useState<{
     pnls: number[];
     trades: number[];
-    nickname: string;
+    person: string[];
     rank: string;
     totalPlayers: number;
     activePlayers: number;
@@ -52,7 +59,7 @@ const PlayerDetails = ({ address }: { address: string }) => {
   }>({
     pnls: [],
     trades: [],
-    nickname: "",
+    person: ["", "", ""],
     rank: "-",
     totalPlayers: 0,
     activePlayers: 0,
@@ -75,7 +82,6 @@ const PlayerDetails = ({ address }: { address: string }) => {
           await import("../../../utils/contract")
         ).getStats(competitionAddress, address);
 
-        // Get all-time PNL data for ranking and nickname
         const { participants, realizedPNLs, unrealizedPNLs } =
           await fetchPNLData();
 
@@ -83,11 +89,10 @@ const PlayerDetails = ({ address }: { address: string }) => {
           (participant) => participant.toLowerCase() === address.toLowerCase()
         );
 
-        // Get player nickname
-        const nickname =
+        const person =
           participantIndex >= 0
-            ? getNickname(participantIndex)
-            : "Unknown Player";
+            ? getPerson(participantIndex)
+            : ["Unknown Player", "Unknown Player", "Unknown"];
 
         // Calculate player's total PNL (realized + unrealized)
         let totalPNL = 0;
@@ -119,7 +124,7 @@ const PlayerDetails = ({ address }: { address: string }) => {
         setPlayerStats({
           pnls: formattedPNLs,
           trades: formattedTrades,
-          nickname: nickname,
+          person: person,
           rank: rank,
           totalPlayers: participants.length,
           activePlayers: activeParticipants,
@@ -307,7 +312,18 @@ const PlayerDetails = ({ address }: { address: string }) => {
                     {loading ? (
                       <span className="inline-block h-7 w-36 bg-gray-700 rounded animate-pulse" />
                     ) : (
-                      playerStats.nickname
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>{playerStats.person[0]}</span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            {playerStats.person[1] +
+                              ", " +
+                              playerStats.person[2]}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
                     )}
                   </h1>
                 </div>

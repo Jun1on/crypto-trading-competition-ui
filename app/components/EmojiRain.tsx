@@ -40,7 +40,7 @@ const EmojiRain: React.FC = () => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.05, // Stagger particles AND the logo group container
+        staggerChildren: 0.04, // Stagger particles AND the logo group container
       },
     },
     exit: { opacity: 0, transition: { duration: 0.5, when: "afterChildren" } },
@@ -76,7 +76,7 @@ const EmojiRain: React.FC = () => {
       opacity: 0,
       scale: 0.7,
       y: 30,
-      transition: { type: "tween", ease: "easeIn", duration: 0.3 }, // Use easeIn for exit
+      transition: { type: "tween", ease: "easeIn", duration: 3 }, // Use easeIn for exit
     },
   };
 

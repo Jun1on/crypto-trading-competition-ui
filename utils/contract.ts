@@ -39,20 +39,38 @@ export async function getNonce(player: string): Promise<number> {
   return await provider.getTransactionCount(player);
 }
 
-export async function getStats(competitionAddress: string, playerAddress: string): Promise<{ pnls: number[]; trades: number[] }> {
+export async function getStats(
+  competitionAddress: string,
+  playerAddress: string
+): Promise<{ pnls: number[]; trades: number[] }> {
   const [pnls, trades] = await peripheryContract.getStats(
     competitionAddress,
     playerAddress
   );
-  const formattedPNLs = pnls.map((pnl: bigint) => Number(ethers.formatEther(pnl)));
+  const formattedPNLs = pnls.map((pnl: bigint) =>
+    Number(ethers.formatEther(pnl))
+  );
   const formattedTrades = trades.map((trade: bigint) => Number(trade));
   return { pnls: formattedPNLs, trades: formattedTrades };
+}
+
+export function getPerson(index: number) {
+  if (process.env.NEXT_PUBLIC_nicknames) {
+    const nameData = process.env.NEXT_PUBLIC_nicknames.split(",")[index];
+    if (nameData) {
+      let [name, nickname, school] = nameData.split("`");
+      if (!school) school = process.env.NEXT_PUBLIC_DEFAULT_SCHOOL;
+      return [name, nickname, school];
+    }
+  }
+  const template = "Player " + index;
+  return [template, template, process.env.NEXT_PUBLIC_DEFAULT_SCHOOL];
 }
 
 export function getNickname(index: number): string {
   if (process.env.NEXT_PUBLIC_nicknames) {
     const nickname = process.env.NEXT_PUBLIC_nicknames.split(",")[index];
-    if (nickname) return nickname;
+    if (nickname) return nickname.split("`")[0];
   }
   return "Player " + index;
 }
@@ -118,15 +136,18 @@ export async function fetchParticipationData() {
 
     // getParticipation doesn't need _round parameter in the updated API
     const result = await peripheryContract.getParticipation(competitionAddress);
-    
+
     // Check if result is structured as expected
     if (!result || !Array.isArray(result) || result.length < 3) {
-      console.error("Unexpected response format from getParticipation:", result);
-      return { 
+      console.error(
+        "Unexpected response format from getParticipation:",
+        result
+      );
+      return {
         latestRound: null,
-        participants: [], 
-        participationScores: [], 
-        trades: [] 
+        participants: [],
+        participationScores: [],
+        trades: [],
       };
     }
 
@@ -190,7 +211,10 @@ export async function fetchParticipationData() {
   }
 }
 
-export async function getLatestRoundDetails(address?: string, roundNumber?: number) {
+export async function getLatestRoundDetails(
+  address?: string,
+  roundNumber?: number
+) {
   try {
     if (roundNumber === undefined) {
       roundNumber = ethers.MaxUint256;
@@ -213,8 +237,9 @@ export async function getLatestRoundDetails(address?: string, roundNumber?: numb
     }
 
     const competitionAddress = process.env.NEXT_PUBLIC_competitionAddress || "";
-    const participantAddress = address || "0x0000000000000000000000000000000000000000";
-    
+    const participantAddress =
+      address || "0x0000000000000000000000000000000000000000";
+
     const result = await peripheryContract.getRoundDetails(
       competitionAddress,
       roundNumber,
@@ -273,7 +298,7 @@ export async function fetchLatestRoundPNL(roundNumber?: number) {
       mmRealized,
       mmUnrealized,
     ] = await peripheryContract.getRoundPNLs(competitionAddress, roundNumber);
-    
+
     // Fetch current round number from competition contract
     const latestRoundBN = competitionContract
       ? await competitionContract.currentRound()
@@ -284,7 +309,9 @@ export async function fetchLatestRoundPNL(roundNumber?: number) {
       ? (realizedPNLs as bigint[]).map((pnl) => Number(ethers.formatEther(pnl)))
       : [];
     const formattedUnrealizedPNLs = Array.isArray(unrealizedPNLs)
-      ? (unrealizedPNLs as bigint[]).map((pnl) => Number(ethers.formatEther(pnl)))
+      ? (unrealizedPNLs as bigint[]).map((pnl) =>
+          Number(ethers.formatEther(pnl))
+        )
       : [];
 
     return {
