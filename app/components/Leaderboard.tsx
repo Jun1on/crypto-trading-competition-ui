@@ -157,8 +157,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
 
                 // Special styling for market maker
                 const rowClass = entry.isMarketMaker
-                  ? "border-b border-gray-700 bg-blue-900/30 hover:bg-blue-700/60 transition-colors duration-150"
-                  : `border-b border-gray-700 hover:bg-gray-700/70 transition-colors duration-150 ${
+                  ? "border-b border-gray-700 bg-blue-900/30 hover:bg-blue-800/40"
+                  : `border-b border-gray-700 hover:bg-gray-700 ${
                       isMe ? "bg-orange-900/30 ring-1 ring-orange-500" : ""
                     }`;
 
@@ -212,7 +212,11 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                           <div className="flex items-center gap-2">
                             {isSimpleMode ? (
                               <span
-                                className={isMe ? "text-orange-400 font-medium" : "text-white"}
+                                className={
+                                  isMe
+                                    ? "text-orange-400 font-medium"
+                                    : "text-white"
+                                }
                               >
                                 {entry.nickname}
                               </span>
@@ -233,20 +237,21 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                                     <ArrowTopRightOnSquareIcon className="w-4 h-4 ml-1 text-gray-400" />
                                   </span>
                                 </Link>
-                                
-                                {pathname !== "/leaderboard" && currentRoundToken && (
-                                  <Link
-                                    href={`https://dexscreener.com/optimism/${currentRoundToken}?maker=${entry.player}`}
-                                    target="_blank"
-                                    title="View on DexScreener"
-                                    className="text-blue-400 hover:text-blue-300 ml-1"
-                                  >
-                                    <span className="flex items-center text-xs">
-                                      <span>Trades</span>
-                                      <ArrowTopRightOnSquareIcon className="w-3 h-3 ml-1" />
-                                    </span>
-                                  </Link>
-                                )}
+
+                                {pathname !== "/leaderboard" &&
+                                  currentRoundToken && (
+                                    <Link
+                                      href={`https://dexscreener.com/optimism/${currentRoundToken}?maker=${entry.player}`}
+                                      target="_blank"
+                                      title="View on DexScreener"
+                                      className="text-blue-400 hover:text-blue-300 ml-1"
+                                    >
+                                      <span className="flex items-center text-xs">
+                                        <span>Trades</span>
+                                        <ArrowTopRightOnSquareIcon className="w-3 h-3 ml-1" />
+                                      </span>
+                                    </Link>
+                                  )}
                               </>
                             )}
                           </div>
