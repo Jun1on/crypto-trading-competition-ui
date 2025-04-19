@@ -22,7 +22,7 @@ export default function Banner({ address }) {
     if (flyoutVisible) {
       timerId = setTimeout(() => {
         setFlyoutVisible(false);
-      }, 7500);
+      }, 10000);
     }
     return () => {
       if (timerId) clearTimeout(timerId);
@@ -57,17 +57,17 @@ export default function Banner({ address }) {
       <div className="flex items-center justify-center w-full">
         {walletConnected ? (
           <span className="text-center flex items-center flex-wrap justify-center gap-2">
-            Follow the onboarding guide to set up DEXScreener.
+            Follow the onboarding guide to set up DEXScreener
             <button
               onClick={handleDone}
               className="bg-white text-indigo-700 px-3 py-1 rounded text-sm font-medium transition-colors cursor-pointer hover:bg-indigo-100 flex-shrink-0"
             >
-              Done
+              I'm ready!
             </button>
           </span>
         ) : (
           <span className="text-center">
-            👋 Welcome! Connect your wallet to get started.
+            👋 Welcome! Connect your wallet to get started
           </span>
         )}
       </div>
