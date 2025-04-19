@@ -219,6 +219,31 @@ export default function LearnPage() {
             </p>
           </div>
         </section>
+
+        <section className="bg-gray-800 p-6 rounded-lg">
+          <h2 className="text-2xl font-bold mb-4">What's allowed?</h2>
+          <div className="space-y-4">
+            You can use any public DeFi tools. You can use tools to output
+            read-only data, but you cannot use bots or automated scripts to
+            trade.
+          </div>
+          <div className="text-xs text-gray-400 mt-6">
+            <p className="font-bold mb-2">Anti-Cheating Notice:</p>
+            <ul className="list-disc pl-6 space-y-1">
+              <li>
+                Top wallets will be manually reviewed after the competition
+              </li>
+              <li>
+                Transferring assets between wallets to manipulate scores is not
+                allowed
+              </li>
+              <li>
+                Using intermediate contracts to hide asset movement is not
+                allowed
+              </li>
+            </ul>
+          </div>
+        </section>
       </div>
     </div>
   );

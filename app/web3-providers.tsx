@@ -6,10 +6,8 @@ import { WagmiProvider, createConfig, http } from "wagmi";
 import { optimism } from "wagmi/chains";
 import { injected, walletConnect } from "wagmi/connectors";
 
-// 1. Create a client for TanStack Query
 const queryClient = new QueryClient();
 
-// 2. Create wagmi config
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
 
 const metadata = {
@@ -30,7 +28,6 @@ const config = createConfig({
   },
 });
 
-// 3. Create Web3Modal
 createWeb3Modal({
   wagmiConfig: config,
   projectId,

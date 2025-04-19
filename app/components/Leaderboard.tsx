@@ -157,8 +157,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
 
                 // Special styling for market maker
                 const rowClass = entry.isMarketMaker
-                  ? "border-b border-gray-700 bg-blue-900/30 hover:bg-blue-800/40"
-                  : `border-b border-gray-700 hover:bg-gray-700 ${
+                  ? "border-b border-gray-700 bg-blue-900/30 hover:bg-blue-700/60 transition-colors duration-150"
+                  : `border-b border-gray-700 hover:bg-gray-700/70 transition-colors duration-150 ${
                       isMe ? "bg-orange-900/30 ring-1 ring-orange-500" : ""
                     }`;
 

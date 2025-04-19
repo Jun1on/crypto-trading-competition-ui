@@ -17,7 +17,6 @@ import dynamic from "next/dynamic";
 
 import { useSimpleMode } from "../../components/Header";
 import { getNickname, fetchPNLData } from "../../../utils/contract";
-import CardLoading from "./CardLoading";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { formatNumber, pnlColor } from "../../../utils/helpers";
 
@@ -38,11 +37,7 @@ const Line = dynamic(() => import("react-chartjs-2").then((m) => m.Line), {
   ssr: false,
 });
 
-const PlayerDetails = ({
-  address,
-}: {
-  address: string;
-}) => {
+const PlayerDetails = ({ address }: { address: string }) => {
   const { isSimpleMode } = useSimpleMode();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,11 +69,11 @@ const PlayerDetails = ({
         setLoading(true);
         setError(null);
 
-        const competitionAddress = process.env.NEXT_PUBLIC_competitionAddress || "";
-        const { pnls: formattedPNLs, trades: formattedTrades } = await (await import("../../../utils/contract")).getStats(
-          competitionAddress,
-          address
-        );
+        const competitionAddress =
+          process.env.NEXT_PUBLIC_competitionAddress || "";
+        const { pnls: formattedPNLs, trades: formattedTrades } = await (
+          await import("../../../utils/contract")
+        ).getStats(competitionAddress, address);
 
         // Get all-time PNL data for ranking and nickname
         const { participants, realizedPNLs, unrealizedPNLs } =
@@ -147,11 +142,11 @@ const PlayerDetails = ({
 
     const rect = cardRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left; // x position within the element.
-    const y = e.clientY - rect.top;  // y position within the element.
+    const y = e.clientY - rect.top; // y position within the element.
 
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-    
+
     const rotateX = ((centerY - y) / centerY) * 3;
     const rotateY = ((x - centerX) / centerX) * 3;
 
@@ -166,7 +161,7 @@ const PlayerDetails = ({
   // Dynamic style for the card
   const cardStyle = {
     transform: `perspective(1000px) rotateX(${rotate.x}deg) rotateY(${rotate.y}deg) scale(1.03)`,
-    transition: 'transform 0.1s ease-out',
+    transition: "transform 0.1s ease-out",
   };
 
   const cumulativePNLs = playerStats.pnls.reduce((acc: number[], pnl, idx) => {
@@ -198,7 +193,9 @@ const PlayerDetails = ({
           const { ctx, chartArea } = chart;
           console.log("[Chart backgroundColor] chartArea:", chartArea);
           if (!chartArea) {
-            console.warn("[Chart backgroundColor] chartArea is undefined, returning fillColor");
+            console.warn(
+              "[Chart backgroundColor] chartArea is undefined, returning fillColor"
+            );
             return fillColor; // fallback for initial render
           }
           const gradient = ctx.createLinearGradient(
@@ -294,10 +291,8 @@ const PlayerDetails = ({
         <div className="bg-red-900 bg-opacity-50 p-4 rounded-lg mb-6">
           <p className="text-white">{error}</p>
         </div>
-      ) : loading ? (
-        <CardLoading />
       ) : (
-        <div className="max-w-2xl mx-auto" style={{ perspective: '1000px' }}>
+        <div className="max-w-2xl mx-auto" style={{ perspective: "1000px" }}>
           <div
             ref={cardRef}
             onMouseMove={handleMouseMove}
@@ -309,7 +304,11 @@ const PlayerDetails = ({
               <div className="flex justify-between items-baseline">
                 <div>
                   <h1 className="text-2xl font-bold text-white">
-                    {playerStats.nickname}
+                    {loading ? (
+                      <span className="inline-block h-7 w-36 bg-gray-700 rounded animate-pulse" />
+                    ) : (
+                      playerStats.nickname
+                    )}
                   </h1>
                 </div>
 
@@ -319,23 +318,34 @@ const PlayerDetails = ({
                       playerStats.totalPNL
                     )}`}
                   >
-                    {playerStats.totalPNL >= 0 ? "+$" : "-$"}
-                    {formatNumber(Math.abs(playerStats.totalPNL))}
+                    {loading ? (
+                      <span className="inline-block h-8 w-24 bg-gray-700 rounded animate-pulse" />
+                    ) : (
+                      <>
+                        {playerStats.totalPNL >= 0 ? "+$" : "-$"}
+                        {formatNumber(Math.abs(playerStats.totalPNL))}
+                      </>
+                    )}
                   </span>
                 </div>
               </div>
 
               <div className="flex justify-between mt-2 text-sm text-gray-400">
                 <div>
-                  {playerStats.rank !== "-" && (
+                  {loading ? (
+                    <span className="inline-block h-5 w-24 bg-gray-700 rounded animate-pulse" />
+                  ) : playerStats.rank !== "-" ? (
                     <span>
                       Rank #{playerStats.rank} of {playerStats.activePlayers}
                     </span>
+                  ) : (
+                    <span>Unranked</span>
                   )}
-                  {playerStats.rank === "-" && <span>Unranked</span>}
                 </div>
                 <div className="flex items-center gap-1">
-                  {!isSimpleMode && etherscanUrl && (
+                  {loading ? (
+                    <span className="inline-block h-5 w-16 bg-gray-700 rounded animate-pulse" />
+                  ) : !isSimpleMode ? (
                     <a
                       href={etherscanUrl}
                       target="_blank"
@@ -345,8 +355,9 @@ const PlayerDetails = ({
                       {totalTrades} trades
                       <ArrowTopRightOnSquareIcon className="h-3 w-3" />
                     </a>
+                  ) : (
+                    <span>{totalTrades} trades</span>
                   )}
-                  {isSimpleMode && <span>{totalTrades} trades</span>}
                 </div>
               </div>
             </div>
@@ -354,15 +365,7 @@ const PlayerDetails = ({
             {/* Prominent Chart Section */}
             <div className="p-4">
               <div className="h-80">
-                {console.log("[PlayerCard] chartData:", chartData)}
-                {console.log("[PlayerCard] playerStats:", playerStats)}
-                {playerStats.pnls.length > 0 ? (
-                  <Line data={chartData} options={chartOptions} />
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-400">No PNL history available</p>
-                  </div>
-                )}
+                {!loading && <Line data={chartData} options={chartOptions} />}
               </div>
             </div>
           </div>
