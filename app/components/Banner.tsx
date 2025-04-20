@@ -67,20 +67,20 @@ export default function Banner({ address }) {
         {walletConnected ? (
           bannerState === 1 ? (
             <span className="text-center flex items-center flex-wrap justify-center gap-2">
-              Follow the guide to set up Chart
+              Follow the onboarding guide to set up Chart
               <button
                 onClick={handleFirstDone}
-                className="bg-white text-indigo-700 px-3 py-1 rounded text-sm font-medium transition-colors cursor-pointer hover:bg-indigo-100 flex-shrink-0"
+                className="bg-white text-indigo-700 ml-2 px-3 py-1 rounded text-sm font-medium transition-colors cursor-pointer hover:bg-indigo-100 flex-shrink-0"
               >
                 Done
               </button>
             </span>
           ) : (
             <span className="text-center flex items-center flex-wrap justify-center gap-2">
-              Follow the onboarding guide to start trading
+              Now let&apos;s get to trading
               <button
                 onClick={handleSecondDone}
-                className="bg-white text-indigo-700 px-3 py-1 rounded text-sm font-medium transition-colors cursor-pointer hover:bg-indigo-100 flex-shrink-0"
+                className="bg-white text-indigo-700 ml-2 px-3 py-1 rounded text-sm font-medium transition-colors cursor-pointer hover:bg-indigo-100 flex-shrink-0"
               >
                 I&apos;m ready!
               </button>
