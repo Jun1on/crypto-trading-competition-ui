@@ -58,9 +58,10 @@ export function getPerson(index: number) {
   if (process.env.NEXT_PUBLIC_nicknames) {
     const nameData = process.env.NEXT_PUBLIC_nicknames.split(",")[index];
     if (nameData) {
-      let [name, nickname, school] = nameData.split("`");
+      let [nickname, name, school] = nameData.split("`");
+      if (!nickname) nickname = name.split(" ")[0];
       if (!school) school = process.env.NEXT_PUBLIC_DEFAULT_SCHOOL;
-      return [name, nickname, school];
+      return [nickname, name, school];
     }
   }
   const template = "Player " + index;
@@ -68,10 +69,13 @@ export function getPerson(index: number) {
 }
 
 export function getNickname(index: number): string {
-  if (process.env.NEXT_PUBLIC_nicknames) {
-    const nickname = process.env.NEXT_PUBLIC_nicknames.split(",")[index];
-    if (nickname) return nickname.split("`")[0];
-  }
+  try {
+    if (process.env.NEXT_PUBLIC_nicknames) {
+      const nickname = process.env.NEXT_PUBLIC_nicknames.split(",")[index];
+      if (nickname)
+        return nickname.split("`")[0] || nickname.split("`")[1].split(" ")[0];
+    }
+  } catch (e) {}
   return "Player " + index;
 }
 
