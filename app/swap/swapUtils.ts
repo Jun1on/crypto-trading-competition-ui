@@ -14,15 +14,13 @@ export const ERC20_ABI = [
   "function name() view returns (string)",
 ];
 export const MULTICALL_ABI = [
-  "function aggregate3(tuple(address target, bool allowFailure, bytes callData)[] calls) public view returns (tuple(bool success, bytes returnData)[])"
+  "function aggregate3(tuple(address target, bool allowFailure, bytes callData)[] calls) public view returns (tuple(bool success, bytes returnData)[])",
 ];
 
-const RPC_LIST = [
-  "https://mainnet.optimism.io",
-  "https://optimism-mainnet.public.blastapi.io",
-  "https://optimism.drpc.org",
-  "https://optimism-rpc.publicnode.com"
-];
+const RPC_LIST = process.env.NEXT_PUBLIC_RPC_LIST.split(",").map((url) =>
+  url.trim()
+);
+
 let rpcIndex = 0;
 export function getNextRpcUrl() {
   const url = RPC_LIST[rpcIndex];
@@ -37,15 +35,11 @@ export async function multicallWithRpcCycling({
   multicallAbi = MULTICALL_ABI,
   maxRetries = RPC_LIST.length,
 }) {
-  
   let lastError;
   for (let i = 0; i < maxRetries; i++) {
     const rpcUrl = getNextRpcUrl();
     try {
-      console.log(
-        new Date().toLocaleTimeString(),
-        rpcUrl,
-      );
+      console.log(new Date().toLocaleTimeString(), rpcUrl);
       const provider = new ethers.JsonRpcProvider(rpcUrl);
       const multicallContract = new ethers.Contract(
         multicallAddress,
@@ -63,9 +57,18 @@ export async function multicallWithRpcCycling({
 }
 
 // --- Helper: prepare multicall balance calls ---
-export function prepareBalanceCalls({ inputTokenAddr, outputTokenAddr, accountAddress, erc20Interface }) {
-  const balanceInCallData = erc20Interface.encodeFunctionData("balanceOf", [accountAddress]);
-  const balanceOutCallData = erc20Interface.encodeFunctionData("balanceOf", [accountAddress]);
+export function prepareBalanceCalls({
+  inputTokenAddr,
+  outputTokenAddr,
+  accountAddress,
+  erc20Interface,
+}) {
+  const balanceInCallData = erc20Interface.encodeFunctionData("balanceOf", [
+    accountAddress,
+  ]);
+  const balanceOutCallData = erc20Interface.encodeFunctionData("balanceOf", [
+    accountAddress,
+  ]);
   return [
     {
       target: inputTokenAddr,

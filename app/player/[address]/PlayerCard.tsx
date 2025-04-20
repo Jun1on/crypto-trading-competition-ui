@@ -152,8 +152,8 @@ const PlayerDetails = ({ address }: { address: string }) => {
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
 
-    const rotateX = ((centerY - y) / centerY) * 3;
-    const rotateY = ((x - centerX) / centerX) * 3;
+    const rotateX = ((centerY - y) / centerY) * 1.5;
+    const rotateY = ((x - centerX) / centerX) * 1.5;
 
     setRotate({ x: rotateX, y: rotateY });
   };
