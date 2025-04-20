@@ -5,10 +5,12 @@ import Cookies from "js-cookie";
 import { AnimatePresence } from "framer-motion";
 import Flyout from "./Flyout";
 import EmojiRain from "./EmojiRain"; // Import the new component
+import { useSwitchChain } from "wagmi";
 
 export default function Banner({ address }) {
   const [bannerState, setBannerState] = useState(0);
   const [flyoutVisible, setFlyoutVisible] = useState(false);
+  const { switchChain } = useSwitchChain();
 
   useEffect(() => {
     const b = Cookies.get("bannerState");
@@ -34,11 +36,13 @@ export default function Banner({ address }) {
   }, [flyoutVisible]);
 
   const handleFirstDone = () => {
+    switchChain({ chainId: Number(process.env.NEXT_PUBLIC_CHAIN_ID) });
     setBannerState(2);
     Cookies.set("bannerState", "2", { expires: 365 });
   };
 
   const handleSecondDone = () => {
+    switchChain({ chainId: Number(process.env.NEXT_PUBLIC_CHAIN_ID) });
     setFlyoutVisible(true);
     setBannerState(0);
     Cookies.set("bannerState", "0", { expires: 365 });

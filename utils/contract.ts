@@ -198,7 +198,7 @@ export function getPerson(index: number) {
         nickname = name.split(" ")[0]; // safe check for name
       else if (!nickname) nickname = `Player ${index}`; // fallback if name is also empty
       if (!school) school = process.env.NEXT_PUBLIC_DEFAULT_SCHOOL || "N/A"; // Add fallback for school env var
-      return [nickname, name || `Player ${index} Full`, school]; // Add fallback for name
+      return [nickname, name || `Player ${index}`, school];
     }
   }
   const template = "Player " + index;
