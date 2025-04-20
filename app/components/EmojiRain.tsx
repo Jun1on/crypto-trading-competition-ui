@@ -102,7 +102,7 @@ const EmojiRain: React.FC = () => {
       initial="hidden"
       animate="visible"
       exit="exit"
-      className="fixed inset-0 w-screen h-screen pointer-events-none z-[99] overflow-hidden"
+      className="fixed inset-0 w-screen h-screen z-[99] overflow-hidden bg-gray-900/50" // <-- Added bg-gray-900/50
     >
       {/* Render Particles first */}
       {particles.map((particle) => (
@@ -138,7 +138,7 @@ const EmojiRain: React.FC = () => {
             layout="fill"
             objectFit="contain"
             priority
-            className="drop-shadow-lg pointer-events-none"
+            className="drop-shadow-lg pointer-events-none select-none"
           />
         </motion.div>
 
@@ -153,7 +153,7 @@ const EmojiRain: React.FC = () => {
             layout="fill"
             objectFit="contain"
             priority
-            className="drop-shadow-lg pointer-events-none"
+            className="drop-shadow-lg pointer-events-none select-none"
           />
         </motion.div>
 
@@ -168,7 +168,7 @@ const EmojiRain: React.FC = () => {
             layout="fill"
             objectFit="contain"
             priority
-            className="drop-shadow-lg pointer-events-none"
+            className="drop-shadow-lg pointer-events-none select-none"
           />
         </motion.div>
       </motion.div>
