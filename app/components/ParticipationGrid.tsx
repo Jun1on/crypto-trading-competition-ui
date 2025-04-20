@@ -70,7 +70,7 @@ const ParticipationGrid: React.FC<ParticipationGridProps> = ({
               key={index}
               href={`${process.env.NEXT_PUBLIC_BLOCK_EXPLORER_URL}/address/${entry.player}`}
               className={`
-                p-4 rounded-lg border ${colorClass} transition-colors
+                p-4 rounded-lg border ${colorClass} transition-colors overflow-hidden
                 ${isMe ? "ring-2 ring-orange-500" : ""}
               `}
               target="_blank"
@@ -79,14 +79,23 @@ const ParticipationGrid: React.FC<ParticipationGridProps> = ({
                 <div className="flex items-start justify-between">
                   <div className="flex flex-col items-start">
                     <h3
-                      className={`font-medium truncate max-w-[80%] ${
+                      className={`font-medium truncate max-w-[80%]${
                         isMe ? "text-orange-400" : "text-white"
                       }`}
                     >
                       {entry.person[0]}
                     </h3>
                     <h2 className="text-gray-400 text-xs">{entry.person[1]}</h2>
-                    <h2 className="text-gray-400 text-xs">{entry.person[2]}</h2>
+                    <h2
+                      className={`text-${
+                        entry.person[2] ==
+                        process.env.NEXT_PUBLIC_DEFAULT_SCHOOL
+                          ? "gray-400"
+                          : "white"
+                      } text-xs`}
+                    >
+                      {entry.person[2]}
+                    </h2>
                   </div>
                   <ArrowTopRightOnSquareIcon className="w-4 h-4 text-gray-400 flex-shrink-0 ml-2" />
                 </div>
