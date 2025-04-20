@@ -55,7 +55,7 @@ const ParticipationGrid: React.FC<ParticipationGridProps> = ({
 
   // Sort the participation data alphabetically by nickname (ignoring case)
   const sortedParticipationData = [...participationData].sort((a, b) =>
-    a.person[1].toLowerCase().localeCompare(b.person[1].toLowerCase())
+    a.person[0].toLowerCase().localeCompare(b.person[0].toLowerCase())
   );
 
   return (
