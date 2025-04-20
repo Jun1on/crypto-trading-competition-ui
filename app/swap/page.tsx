@@ -46,6 +46,7 @@ import {
   ROUTER_ABI,
   MULTICALL_ABI,
   V2_ROUTER_ADDRESS,
+  MULTICALL3_ADDRESS,
 } from "./swapUtils";
 
 const REFETCH_INTERVAL = 10000;
