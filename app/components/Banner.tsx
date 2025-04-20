@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Cookies from "js-cookie";
 import { AnimatePresence } from "framer-motion";
 import Flyout from "./Flyout";
-import EmojiRain from "./EmojiRain"; // Import the new component
+import EmojiRain from "./EmojiRain";
 import { useSwitchChain } from "wagmi";
 
 export default function Banner({ address }) {
