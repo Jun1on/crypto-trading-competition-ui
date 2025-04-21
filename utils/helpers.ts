@@ -15,6 +15,10 @@ export const formatNumber = (
   }).format(num);
 };
 
+export const formatPNL = (PNL: number) => {
+  return `${PNL > 0 ? "+$" : "-$"}${formatNumber(Math.abs(PNL))}`;
+};
+
 export const truncateAddress = (address: string) => {
   return `${address.substring(0, 6)}...${address.substring(
     address.length - 4

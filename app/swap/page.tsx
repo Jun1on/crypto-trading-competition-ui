@@ -655,7 +655,7 @@ const SwapPage = () => {
   };
 
   const handleSwapDirection = () => {
-    if (isCalculatingOutput || isSwapping) return; // Prevent swap during calculation/swap
+    if (isSwapping) return;
 
     // Swap amounts
     const currentInput = inputAmount;
