@@ -11,7 +11,7 @@ import Skeleton from "react-loading-skeleton";
 import { getNickname } from "../../utils/contract";
 import { useSimpleMode } from "./Header";
 import Link from "next/link";
-import { pnlColor, formatNumber } from "../../utils/helpers";
+import { pnlColor, formatNumber, formatPNL } from "../../utils/helpers";
 import {
   Tooltip,
   TooltipContent,
@@ -242,8 +242,7 @@ const PlayerDashboard = ({
                 playerData.totalPNL
               )}`}
             >
-              {playerData.totalPNL > 0 ? "+" : ""}
-              {formatNumber(playerData.totalPNL)} USDM
+              {formatPNL(playerData.totalPNL)}
             </div>
             {!isSimpleMode && (
               <div className="flex justify-between mt-2 text-xs">

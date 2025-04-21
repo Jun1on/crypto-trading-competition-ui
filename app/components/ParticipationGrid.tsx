@@ -2,7 +2,6 @@
 import React from "react";
 import Link from "next/link";
 import { getPerson } from "../../utils/contract";
-import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 
 interface ParticipationGridProps {
   participants: string[];
@@ -76,28 +75,24 @@ const ParticipationGrid: React.FC<ParticipationGridProps> = ({
               target="_blank"
             >
               <div className="flex flex-col">
-                <div className="flex items-start justify-between">
-                  <div className="flex flex-col items-start">
-                    <h3
-                      className={`font-medium truncate max-w-[80%]${
-                        isMe ? "text-orange-400" : "text-white"
-                      }`}
-                    >
-                      {entry.person[0]}
-                    </h3>
-                    <h2 className="text-gray-400 text-xs">{entry.person[1]}</h2>
-                    <h2
-                      className={`text-${
-                        entry.person[2] ==
-                        process.env.NEXT_PUBLIC_DEFAULT_SCHOOL
-                          ? "gray-400"
-                          : "white"
-                      } text-xs`}
-                    >
-                      {entry.person[2]}
-                    </h2>
-                  </div>
-                  <ArrowTopRightOnSquareIcon className="w-4 h-4 text-gray-400 flex-shrink-0 ml-2" />
+                <div className="flex flex-col items-start">
+                  <h3
+                    className={`font-medium truncate max-w-[80%]${
+                      isMe ? "text-orange-400" : "text-white"
+                    }`}
+                  >
+                    {entry.person[0]}
+                  </h3>
+                  <h2 className="text-gray-400 text-xs">{entry.person[1]}</h2>
+                  <h2
+                    className={`text-${
+                      entry.person[2] == process.env.NEXT_PUBLIC_DEFAULT_SCHOOL
+                        ? "gray-400"
+                        : "white"
+                    } text-xs`}
+                  >
+                    {entry.person[2]}
+                  </h2>
                 </div>
                 <div className="mt-1 text-xs text-gray-400">
                   {entry.tradeCount}{" "}
