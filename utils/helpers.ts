@@ -16,7 +16,7 @@ export const formatNumber = (
 };
 
 export const formatPNL = (PNL: number) => {
-  return `${PNL > 0 ? "+$" : "-$"}${formatNumber(Math.abs(PNL))}`;
+  return `${PNL >= 0 ? "+$" : "-$"}${formatNumber(Math.abs(PNL))}`;
 };
 
 export const truncateAddress = (address: string) => {
