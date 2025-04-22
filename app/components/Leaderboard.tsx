@@ -158,22 +158,21 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                 // Special styling for market maker
                 const rowClass = entry.isMarketMaker
                   ? "border-b border-gray-700 bg-blue-900/30 hover:bg-blue-800/40"
-                  : `border-b border-gray-700 hover:bg-gray-700 ${
-                      isMe ? "bg-orange-900/30 ring-1 ring-orange-500" : ""
-                    }`;
+                  : `border-b border-gray-700 hover:bg-gray-700 ${isMe ? "bg-orange-900/30 ring-1 ring-orange-500" : ""
+                  }`;
 
                 // Calculate rank - skip incrementing for market maker
                 const displayRank = entry.isMarketMaker
                   ? ""
                   : (
-                      index +
-                      1 -
-                      leaderboardData
-                        .slice(0, index)
-                        .filter((e) => e.isMarketMaker).length
-                    )
-                      .toString()
-                      .padStart(3, "0");
+                    index +
+                    1 -
+                    leaderboardData
+                      .slice(0, index)
+                      .filter((e) => e.isMarketMaker).length
+                  )
+                    .toString()
+                    .padStart(3, "0");
 
                 return (
                   <TableRow key={index} className={rowClass}>
@@ -210,64 +209,52 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                           </Tooltip>
                         ) : (
                           <div className="flex items-center gap-2">
-                            {isSimpleMode ? (
-                              <span
-                                className={
-                                  isMe
+
+                            <>
+                              <Link
+                                href={`/player/${entry.player}`}
+                                target="_blank"
+                              >
+                                <span
+                                  className={`flex items-center hover:underline ${isMe
                                     ? "text-orange-400 font-medium"
                                     : "text-white"
-                                }
-                              >
-                                {entry.person[0]}
-                              </span>
-                            ) : (
-                              <>
-                                <Link
-                                  href={`/player/${entry.player}`}
-                                  target="_blank"
-                                >
-                                  <span
-                                    className={`flex items-center hover:underline ${
-                                      isMe
-                                        ? "text-orange-400 font-medium"
-                                        : "text-white"
                                     }`}
-                                  >
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <span>{entry.person[0]}</span>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>
-                                          {entry.person[2] ==
+                                >
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span>{entry.person[0]}</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>
+                                        {entry.person[2] ==
                                           process.env.NEXT_PUBLIC_DEFAULT_SCHOOL
-                                            ? entry.person[1]
-                                            : entry.person[1] +
-                                              ", " +
-                                              entry.person[2]}
-                                        </p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                    <ArrowTopRightOnSquareIcon className="w-4 h-4 ml-1 text-gray-400" />
-                                  </span>
-                                </Link>
+                                          ? entry.person[1]
+                                          : entry.person[1] +
+                                          ", " +
+                                          entry.person[2]}
+                                      </p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                  <ArrowTopRightOnSquareIcon className="w-4 h-4 ml-1 text-gray-400" />
+                                </span>
+                              </Link>
 
-                                {pathname !== "/leaderboard" &&
-                                  currentRoundToken && (
-                                    <Link
-                                      href={`https://dexscreener.com/optimism/${currentRoundToken}?maker=${entry.player}`}
-                                      target="_blank"
-                                      title="View on DexScreener"
-                                      className="text-blue-400 hover:text-blue-300 ml-1"
-                                    >
-                                      <span className="flex items-center text-xs">
-                                        <span>Trades</span>
-                                        <ArrowTopRightOnSquareIcon className="w-3 h-3 ml-1" />
-                                      </span>
-                                    </Link>
-                                  )}
-                              </>
-                            )}
+                              {pathname !== "/leaderboard" &&
+                                currentRoundToken && !isSimpleMode && (
+                                  <Link
+                                    href={`https://dexscreener.com/optimism/${currentRoundToken}?maker=${entry.player}`}
+                                    target="_blank"
+                                    title="View on DexScreener"
+                                    className="text-blue-400 hover:text-blue-300 ml-1"
+                                  >
+                                    <span className="flex items-center text-xs">
+                                      <span>Trades</span>
+                                      <ArrowTopRightOnSquareIcon className="w-3 h-3 ml-1" />
+                                    </span>
+                                  </Link>
+                                )}
+                            </>
                           </div>
                         )}
                       </div>
@@ -275,13 +262,12 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                     {!isSimpleMode && (
                       <>
                         <TableCell
-                          className={`p-2 text-right ${
-                            entry.realizedPNL < 0
-                              ? "text-red-400"
-                              : entry.realizedPNL > 0
+                          className={`p-2 text-right ${entry.realizedPNL < 0
+                            ? "text-red-400"
+                            : entry.realizedPNL > 0
                               ? "text-green-400"
                               : "text-gray-400"
-                          }`}
+                            }`}
                         >
                           {parseFloat(
                             entry.realizedPNL.toFixed(2)
@@ -291,13 +277,12 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                           })}
                         </TableCell>
                         <TableCell
-                          className={`p-4 text-right ${
-                            entry.unrealizedPNL < 0
-                              ? "text-red-400"
-                              : entry.unrealizedPNL > 0
+                          className={`p-4 text-right ${entry.unrealizedPNL < 0
+                            ? "text-red-400"
+                            : entry.unrealizedPNL > 0
                               ? "text-green-400"
                               : "text-gray-400"
-                          }`}
+                            }`}
                         >
                           {parseFloat(
                             entry.unrealizedPNL.toFixed(2)
@@ -309,13 +294,12 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                       </>
                     )}
                     <TableCell
-                      className={`p-4 text-right ${
-                        entry.totalPNL < 0
-                          ? "text-red-400"
-                          : entry.totalPNL > 0
+                      className={`p-4 text-right ${entry.totalPNL < 0
+                        ? "text-red-400"
+                        : entry.totalPNL > 0
                           ? "text-green-400"
                           : "text-gray-400"
-                      }`}
+                        }`}
                     >
                       {parseFloat(entry.totalPNL.toFixed(2)).toLocaleString(
                         "en-US",
