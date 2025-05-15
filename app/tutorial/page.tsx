@@ -8,6 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useAccount } from "wagmi";
 
 const address = process.env.NEXT_PUBLIC_USDM_ADDRESS;
 const TOKEN_TEMPLATE = `pragma solidity ^0.8.24;
@@ -21,6 +22,7 @@ contract Token is ERC20 {
 }`;
 
 export default function TutorialPage() {
+  const { isConnected } = useAccount();
   // Handles copy and toast
   function copyToClipboard(text, which = "code") {
     navigator.clipboard.writeText(text);
@@ -30,6 +32,11 @@ export default function TutorialPage() {
   return (
     <div className="container mx-auto max-w-3xl p-6 space-y-10">
       <Toaster />
+      {!isConnected && (
+        <div className="bg-orange-500/90 text-white text-center font-semibold rounded-lg px-4 py-3 mb-6 shadow-lg border border-orange-700">
+          Please connect your wallet first
+        </div>
+      )}
 
       <h1 className="text-3xl font-bold text-white mb-2">
         Create your own token in minutes
