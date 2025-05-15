@@ -9,6 +9,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAccount } from "wagmi";
+import { useWeb3Modal } from "@web3modal/wagmi/react";
 
 const address = process.env.NEXT_PUBLIC_USDM_ADDRESS;
 const TOKEN_TEMPLATE = `pragma solidity ^0.8.24;
@@ -23,24 +24,24 @@ contract Token is ERC20 {
 
 export default function TutorialPage() {
   const { isConnected } = useAccount();
+  const { open } = useWeb3Modal();
   // Handles copy and toast
   function copyToClipboard(text, which = "code") {
     navigator.clipboard.writeText(text);
-    toast.success("Copied!");
+    toast("Copied!");
   }
 
   return (
     <div className="container mx-auto max-w-3xl p-6 space-y-10">
       <Toaster />
       {!isConnected && (
-        <div className="bg-orange-500/90 text-white text-center font-semibold rounded-lg px-4 py-3 mb-6 shadow-lg border border-orange-700">
-          Please connect your wallet first
+        <div
+          className="bg-orange-500/90 text-white text-center font-semibold rounded-lg px-4 py-3 mb-6 shadow-lg border border-orange-700 cursor-pointer hover:bg-orange-600 transition"
+          onClick={() => open()}
+        >
+          Connect your MetaMask and switch to OP Mainnet
         </div>
       )}
-
-      <h1 className="text-3xl font-bold text-white mb-2">
-        Create your own token in minutes
-      </h1>
 
       {/* STEP 1 */}
       <section className="bg-gray-800 p-6 rounded-lg space-y-4">
@@ -60,7 +61,7 @@ export default function TutorialPage() {
           </li>
           <li>
             <TooltipProvider>
-              <Tooltip>
+              <Tooltip disableHoverableContent={true}>
                 <TooltipTrigger asChild>
                   <span className="cursor-pointer border-b border-dotted border-blue-400 hover:cursor-help focus:cursor-help">
                     create a new file
@@ -104,7 +105,7 @@ export default function TutorialPage() {
           </li>
           <li>
             <TooltipProvider>
-              <Tooltip>
+              <Tooltip disableHoverableContent={true}>
                 <TooltipTrigger asChild>
                   <span className="cursor-pointer border-b border-dotted border-blue-400 hover:cursor-help focus:cursor-help">
                     open the deploy tab
@@ -122,7 +123,7 @@ export default function TutorialPage() {
           </li>
           <li>
             <TooltipProvider>
-              <Tooltip>
+              <Tooltip disableHoverableContent={true}>
                 <TooltipTrigger asChild>
                   <span className="cursor-pointer border-b border-dotted border-blue-400 hover:cursor-help focus:cursor-help">
                     switch to injected provider
@@ -145,13 +146,13 @@ export default function TutorialPage() {
               className="px-2 py-1 ml-1 rounded"
               style={{ background: "#C97539", color: "white" }}
             >
-              deploy
+              Deploy
             </span>{" "}
             and confirm in MetaMask
           </li>
           <li>
             <TooltipProvider>
-              <Tooltip>
+              <Tooltip disableHoverableContent={true}>
                 <TooltipTrigger asChild>
                   <span className="cursor-pointer border-b border-dotted border-blue-400 hover:cursor-help focus:cursor-help">
                     copy your token address
@@ -184,8 +185,16 @@ export default function TutorialPage() {
               className="underline text-blue-400 hover:text-blue-300"
             >
               app.uniswap.org/positions/create/v2
-            </a>{" "}
-            and connect your wallet
+            </a>
+          </li>
+          <li>
+            <span
+              className="px-2 py-1 ml-1 rounded"
+              style={{ background: "#FF37C7", color: "white" }}
+            >
+              Connect
+            </span>{" "}
+            → Other wallets → MetaMask
           </li>
           <li>
             for token <b>A</b>, paste your token address
@@ -207,15 +216,26 @@ export default function TutorialPage() {
             set an initial price (e.g. <span className="text-blue-300">$2</span>
             ) and choose how much liquidity to add
           </li>
-          <li>review and create</li>
+          <li>
+            <span
+              className="px-2 py-1 ml-1 rounded"
+              style={{ background: "#FF37C7", color: "white" }}
+            >
+              Review
+            </span>
+            {" → "}
+            <span
+              className="px-2 py-1 ml-1 rounded"
+              style={{ background: "#FF37C7", color: "white" }}
+            >
+              Create
+            </span>
+          </li>
         </ol>
       </section>
 
-      {/* STEP 3 */}
       <section className="bg-gray-800 p-6 rounded-lg space-y-4">
-        <h2 className="text-xl font-semibold text-orange-400 mb-2">
-          Swap & explore
-        </h2>
+        <h2 className="text-xl font-semibold text-orange-400 mb-2">Swap</h2>
         <ol className="list-decimal ml-6 space-y-2 text-white mb-0">
           <li>
             go to&nbsp;
@@ -231,7 +251,40 @@ export default function TutorialPage() {
         </ol>
         <div className="bg-blue-900/70 text-blue-200 rounded px-4 py-2 text-sm mt-4">
           dexscreener.com/optimism/
-          <span className="text-orange-400 font-mono">0xYOUR_TOKEN</span>
+          <span className="text-orange-400 font-mono">
+            0xYOUR_TOKEN_ADDRESS
+          </span>
+        </div>
+      </section>
+
+      <section className="bg-gray-800 p-6 rounded-lg space-y-4">
+        <h2 className="text-xl font-semibold text-orange-400 mb-2">
+          Experiment
+        </h2>
+        <ol className="list-decimal ml-6 space-y-2 text-white mb-0">
+          <li>
+            Try swapping different amounts. How does the swap size affect the
+            price impact? What happens if you try a very large swap?
+          </li>
+          <li>
+            Add or remove liquidity to your pool. How does this change the price
+            stability? Does it make large trades more or less volatile?
+          </li>
+          <li>
+            Send your token address to someone else in the room and trade it
+            together. How do you make money against them?
+          </li>
+          <li>
+            If you provide liquidity, how do you make (or lose) money? What
+            happens if the price moves a lot after you add liquidity?
+          </li>
+          <li>
+            Try removing your liquidity after some trades. Did your USDM/token
+            balance change? Why?
+          </li>
+        </ol>
+        <div className="text-center text-xs text-gray-400 mt-6">
+          we will reveal the answers at the end
         </div>
       </section>
     </div>
