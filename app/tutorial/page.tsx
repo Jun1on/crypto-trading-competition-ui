@@ -259,6 +259,36 @@ export default function TutorialPage() {
 
       <section className="bg-gray-800 p-6 rounded-lg space-y-4">
         <h2 className="text-xl font-semibold text-orange-400 mb-2">
+          Join the Discord!
+        </h2>
+        <div className="text-white text-base">
+          <p className="mb-2">
+            <b>Ready to show off your token?</b> Join our Discord and share your
+            token address in the{" "}
+            <span className="text-blue-300 font-mono">
+              #trading-competition
+            </span>{" "}
+            channel!
+          </p>
+          <a
+            href="https://discord.gg/HpCxDwPs2D"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2 rounded transition mb-2"
+          >
+            Join Discord
+          </a>
+          <ul className="list-disc ml-6 mt-4 space-y-1 text-blue-200 text-sm">
+            <li>Advertise your own token and try to get others to trade it!</li>
+            <li>
+              Trade other people's tokens and see who can make the most profit.
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section className="bg-gray-800 p-6 rounded-lg space-y-4">
+        <h2 className="text-xl font-semibold text-orange-400 mb-2">
           Experiment
         </h2>
         <ol className="list-decimal ml-6 space-y-2 text-white mb-0">
@@ -271,8 +301,8 @@ export default function TutorialPage() {
             stability? Does it make large trades more or less volatile?
           </li>
           <li>
-            Send your token address to someone else in the room and trade it
-            together. How do you make money against them?
+            Trade your token with someone else in the room. How do you make
+            money against them?
           </li>
           <li>
             If you provide liquidity, how do you make (or lose) money? What
@@ -287,6 +317,15 @@ export default function TutorialPage() {
           we will reveal the answers at the end
         </div>
       </section>
+
+      <div className="bg-gray-900/80 text-gray-300 text-xs italic rounded-lg px-4 py-3 mt-8 mb-2 border border-gray-700 text-center">
+        DISCLAIMER: The Blockchain Club at Northwestern University is an
+        educational organization, not a financial institution. Nothing on this
+        site constitutes financial advice. All strategies and commentary are
+        intended solely for use in the context of our simulated crypto trading
+        competition. Crypto markets are unique. Please do your own research
+        before making any financial decisions.
+      </div>
     </div>
   );
 }
