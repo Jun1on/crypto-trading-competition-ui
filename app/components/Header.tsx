@@ -54,14 +54,16 @@ export const useSimpleMode = () => {
 // Provider component
 export const SimpleModeProvider = ({ children }: { children: ReactNode }) => {
   // Initialize state with default true, cookie check happens in useEffect
-  const [isSimpleMode, setIsSimpleMode] = useState(true);
+  const [isSimpleMode, setIsSimpleMode] = useState(false);
 
   // Effect to read initial state from cookie on client-side mount
   useEffect(() => {
     const cookieValue = Cookies.get("simpleMode");
     if (cookieValue !== undefined) {
-      // Parse the string value from cookie
-      setIsSimpleMode(cookieValue === "false");
+      setIsSimpleMode(cookieValue === "true");
+    } else {
+      // default
+      setIsSimpleMode(false);
     }
   }, []); // Empty dependency array means this runs only once on mount
 
