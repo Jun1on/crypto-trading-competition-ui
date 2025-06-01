@@ -61,7 +61,7 @@ export const SimpleModeProvider = ({ children }: { children: ReactNode }) => {
     const cookieValue = Cookies.get("simpleMode");
     if (cookieValue !== undefined) {
       // Parse the string value from cookie
-      setIsSimpleMode(cookieValue === "true");
+      setIsSimpleMode(cookieValue === "false");
     }
   }, []); // Empty dependency array means this runs only once on mount
 
